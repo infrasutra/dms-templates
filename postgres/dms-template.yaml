@@ -1,0 +1,49 @@
+version: "1"
+kind: template
+metadata:
+  name: postgres
+  description: PostgreSQL is a powerful, open-source object-relational database system with a strong reputation for reliability, feature robustness, and performance.
+  category: database
+  tags:
+    - database
+    - sql
+    - relational
+    - postgresql
+spec:
+  image: postgres:16-alpine
+  port: 5432
+  variables:
+    - name: POSTGRES_USER
+      description: PostgreSQL superuser username
+      required: false
+      default: postgres
+    - name: POSTGRES_PASSWORD
+      description: PostgreSQL superuser password
+      required: true
+      generate: password
+    - name: POSTGRES_DB
+      description: Default database name to create
+      required: false
+      default: postgres
+  volumes:
+    - name: postgres-data
+      mountPath: /var/lib/postgresql/data
+      size: 10Gi
+  healthcheck:
+    command:
+      - pg_isready
+      - -U
+      - $(POSTGRES_USER)
+      - -d
+      - $(POSTGRES_DB)
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi

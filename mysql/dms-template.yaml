@@ -1,0 +1,55 @@
+version: "1"
+kind: template
+metadata:
+  name: mysql
+  description: MySQL is the world's most popular open-source relational database management system, known for its speed, reliability, and ease of use.
+  category: database
+  tags:
+    - database
+    - sql
+    - relational
+    - mysql
+spec:
+  image: mysql:8.0
+  port: 3306
+  variables:
+    - name: MYSQL_ROOT_PASSWORD
+      description: MySQL root user password
+      required: true
+      generate: password
+    - name: MYSQL_USER
+      description: MySQL application user username
+      required: false
+      default: app
+    - name: MYSQL_PASSWORD
+      description: MySQL application user password
+      required: false
+      generate: password
+    - name: MYSQL_DATABASE
+      description: Default database name to create
+      required: false
+      default: app
+  volumes:
+    - name: mysql-data
+      mountPath: /var/lib/mysql
+      size: 10Gi
+  healthcheck:
+    command:
+      - mysqladmin
+      - ping
+      - -h
+      - localhost
+      - -u
+      - root
+      - -p$(MYSQL_ROOT_PASSWORD)
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi

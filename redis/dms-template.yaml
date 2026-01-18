@@ -1,0 +1,47 @@
+version: "1"
+kind: template
+metadata:
+  name: redis
+  description: Redis is an open-source, in-memory data structure store used as a database, cache, message broker, and streaming engine.
+  category: cache
+  tags:
+    - cache
+    - database
+    - in-memory
+    - key-value
+    - redis
+spec:
+  image: redis:7-alpine
+  port: 6379
+  command:
+    - redis-server
+    - --appendonly
+    - "yes"
+    - --requirepass
+    - $(REDIS_PASSWORD)
+  variables:
+    - name: REDIS_PASSWORD
+      description: Redis authentication password
+      required: false
+      generate: password
+  volumes:
+    - name: redis-data
+      mountPath: /data
+      size: 5Gi
+  healthcheck:
+    command:
+      - redis-cli
+      - -a
+      - $(REDIS_PASSWORD)
+      - ping
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
