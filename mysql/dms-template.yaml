@@ -1,55 +1,107 @@
 version: "1"
 kind: template
-metadata:
-  name: mysql
-  description: MySQL is the world's most popular open-source relational database management system, known for its speed, reliability, and ease of use.
-  category: database
-  tags:
-    - database
-    - sql
-    - relational
-    - mysql
-spec:
-  image: mysql:8.0
-  port: 3306
-  variables:
-    - name: MYSQL_ROOT_PASSWORD
-      description: MySQL root user password
-      required: true
-      generate: password
-    - name: MYSQL_USER
-      description: MySQL application user username
-      required: false
-      default: app
-    - name: MYSQL_PASSWORD
-      description: MySQL application user password
-      required: false
-      generate: password
-    - name: MYSQL_DATABASE
-      description: Default database name to create
-      required: false
-      default: app
-  volumes:
-    - name: mysql-data
-      mountPath: /var/lib/mysql
-      size: 10Gi
-  healthcheck:
-    command:
-      - mysqladmin
-      - ping
-      - -h
-      - localhost
-      - -u
-      - root
-      - -p$(MYSQL_ROOT_PASSWORD)
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
-  resources:
-    requests:
-      cpu: 100m
-      memory: 512Mi
-    limits:
-      cpu: 1000m
-      memory: 2Gi
+
+# Template metadata
+name: mysql
+description: MySQL is the world's most popular open-source relational database management system, known for its speed, reliability, and ease of use.
+icon: https://raw.githubusercontent.com/docker-library/docs/master/mysql/logo.png
+category: database
+tags:
+  - database
+  - sql
+  - relational
+  - mysql
+
+# Supported versions (can be overridden via VERSION variable)
+versions:
+  - "8.4"
+  - "8.0"
+  - "5.7"
+  - "5.6"
+defaultVersion: "8.0"
+
+# Global variables
+variables:
+  # Version selection
+  - key: VERSION
+    type: string
+    description: MySQL version to deploy
+    configurable: true
+    options:
+      - "8.4"
+      - "8.0"
+      - "5.7"
+      - "5.6"
+    default: "8.0"
+
+  # Database credentials
+  - key: MYSQL_ROOT_PASSWORD
+    type: secret
+    description: MySQL root user password
+    generator: password
+  - key: MYSQL_USER
+    type: string
+    description: MySQL application user username
+    default: app
+  - key: MYSQL_PASSWORD
+    type: secret
+    description: MySQL application user password
+    generator: password
+  - key: MYSQL_DATABASE
+    type: string
+    description: Default database name to create
+    default: app
+
+  # Resource configuration (configurable with smart defaults)
+  - key: STORAGE_SIZE
+    type: integer
+    description: Storage size in MB
+    configurable: true
+    default: 10240
+  - key: MEMORY
+    type: integer
+    description: Memory allocation in MB
+    configurable: true
+    default: 512
+
+  # Networking
+  - key: EXPOSE_EXTERNAL
+    type: boolean
+    description: Enable external access via TLSRoute (internal only by default)
+    configurable: true
+    default: false
+
+# Service definitions
+services:
+  - name: mysql
+    type: worker
+    image: "mysql:${VERSION}"
+    ports:
+      - port: 3306
+    env:
+      - key: MYSQL_ROOT_PASSWORD
+      - key: MYSQL_USER
+      - key: MYSQL_PASSWORD
+      - key: MYSQL_DATABASE
+    volumes:
+      - name: mysql-data
+        path: /var/lib/mysql
+        size: ${STORAGE_SIZE}
+    health_check:
+      type: exec
+      command: ["mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      initial_delay: 15
+      interval: 10
+      timeout: 5
+      retries: 3
+    memory: ${MEMORY}
+    # TCP exposure for external access (disabled by default)
+    tcp_exposure:
+      enabled: ${EXPOSE_EXTERNAL}
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 3306
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

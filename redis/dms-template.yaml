@@ -1,47 +1,103 @@
 version: "1"
 kind: template
-metadata:
-  name: redis
-  description: Redis is an open-source, in-memory data structure store used as a database, cache, message broker, and streaming engine.
-  category: cache
-  tags:
-    - cache
-    - database
-    - in-memory
-    - key-value
-    - redis
-spec:
-  image: redis:7-alpine
-  port: 6379
-  command:
-    - redis-server
-    - --appendonly
-    - "yes"
-    - --requirepass
-    - $(REDIS_PASSWORD)
-  variables:
-    - name: REDIS_PASSWORD
-      description: Redis authentication password
-      required: false
-      generate: password
-  volumes:
-    - name: redis-data
-      mountPath: /data
-      size: 5Gi
-  healthcheck:
+
+# Template metadata
+name: redis
+description: Redis is an open-source, in-memory data structure store used as a database, cache, message broker, and streaming engine.
+icon: https://raw.githubusercontent.com/docker-library/docs/master/redis/logo.png
+category: cache
+tags:
+  - cache
+  - database
+  - in-memory
+  - key-value
+  - redis
+
+# Supported versions (can be overridden via VERSION variable)
+versions:
+  - "8"
+  - "7"
+  - "6"
+defaultVersion: "7"
+
+# Global variables
+variables:
+  # Version selection
+  - key: VERSION
+    type: string
+    description: Redis version to deploy
+    configurable: true
+    options:
+      - "8"
+      - "7"
+      - "6"
+    default: "7"
+
+  # Authentication
+  - key: REDIS_PASSWORD
+    type: secret
+    description: Redis authentication password
+    generator: password
+
+  # Resource configuration (configurable with smart defaults)
+  - key: STORAGE_SIZE
+    type: integer
+    description: Storage size in MB
+    configurable: true
+    default: 5120
+  - key: MEMORY
+    type: integer
+    description: Memory allocation in MB
+    configurable: true
+    default: 128
+  - key: CPU
+    type: integer
+    description: CPU allocation in millicores
+    configurable: true
+    default: 50
+
+  # Networking
+  - key: EXPOSE_EXTERNAL
+    type: boolean
+    description: Enable external access via TLSRoute (internal only by default)
+    configurable: true
+    default: false
+
+# Service definitions
+services:
+  - name: redis
+    type: worker
+    image: "redis:${VERSION}-alpine"
+    ports:
+      - port: 6379
     command:
-      - redis-cli
-      - -a
-      - $(REDIS_PASSWORD)
-      - ping
-    initialDelaySeconds: 5
-    periodSeconds: 10
-    timeoutSeconds: 3
-    failureThreshold: 3
-  resources:
-    requests:
-      cpu: 50m
-      memory: 128Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_PASSWORD}
+    env:
+      - key: REDIS_PASSWORD
+    volumes:
+      - name: redis-data
+        path: /data
+        size: ${STORAGE_SIZE}
+    health_check:
+      type: exec
+      command: ["redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      initial_delay: 5
+      interval: 10
+      timeout: 3
+      retries: 3
+    cpu: ${CPU}
+    memory: ${MEMORY}
+    # TCP exposure for external access (disabled by default)
+    tcp_exposure:
+      enabled: ${EXPOSE_EXTERNAL}
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 6379
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

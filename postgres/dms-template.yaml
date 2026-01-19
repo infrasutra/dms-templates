@@ -1,49 +1,106 @@
 version: "1"
 kind: template
-metadata:
-  name: postgres
-  description: PostgreSQL is a powerful, open-source object-relational database system with a strong reputation for reliability, feature robustness, and performance.
-  category: database
-  tags:
-    - database
-    - sql
-    - relational
-    - postgresql
-spec:
-  image: postgres:16-alpine
-  port: 5432
-  variables:
-    - name: POSTGRES_USER
-      description: PostgreSQL superuser username
-      required: false
-      default: postgres
-    - name: POSTGRES_PASSWORD
-      description: PostgreSQL superuser password
-      required: true
-      generate: password
-    - name: POSTGRES_DB
-      description: Default database name to create
-      required: false
-      default: postgres
-  volumes:
-    - name: postgres-data
-      mountPath: /var/lib/postgresql/data
-      size: 10Gi
-  healthcheck:
-    command:
-      - pg_isready
-      - -U
-      - $(POSTGRES_USER)
-      - -d
-      - $(POSTGRES_DB)
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
-  resources:
-    requests:
-      cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 1000m
-      memory: 1Gi
+
+# Template metadata
+name: postgres
+description: PostgreSQL is a powerful, open-source object-relational database system with a strong reputation for reliability, feature robustness, and performance.
+icon: https://raw.githubusercontent.com/docker-library/docs/master/postgres/logo.png
+category: database
+tags:
+  - database
+  - sql
+  - relational
+  - postgresql
+
+# Supported versions (can be overridden via VERSION variable)
+versions:
+  - "18"
+  - "17"
+  - "16"
+  - "15"
+  - "14"
+  - "13"
+defaultVersion: "16"
+
+# Global variables
+variables:
+  # Version selection
+  - key: VERSION
+    type: string
+    description: PostgreSQL version to deploy
+    configurable: true
+    options:
+      - "18"
+      - "17"
+      - "16"
+      - "15"
+      - "14"
+      - "13"
+    default: "16"
+
+  # Database credentials
+  - key: POSTGRES_USER
+    type: string
+    description: PostgreSQL superuser username
+    default: postgres
+  - key: POSTGRES_PASSWORD
+    type: secret
+    description: PostgreSQL superuser password
+    generator: password
+  - key: POSTGRES_DB
+    type: string
+    description: Default database name to create
+    default: postgres
+
+  # Resource configuration (configurable with smart defaults)
+  - key: STORAGE_SIZE
+    type: integer
+    description: Storage size in MB
+    configurable: true
+    default: 10240
+  - key: MEMORY
+    type: integer
+    description: Memory allocation in MB
+    configurable: true
+    default: 256
+
+  # Networking
+  - key: EXPOSE_EXTERNAL
+    type: boolean
+    description: Enable external access via TLSRoute (internal only by default)
+    configurable: true
+    default: false
+
+# Service definitions
+services:
+  - name: postgres
+    type: worker
+    image: "postgres:${VERSION}-alpine"
+    ports:
+      - port: 5432
+    env:
+      - key: POSTGRES_USER
+      - key: POSTGRES_PASSWORD
+      - key: POSTGRES_DB
+    volumes:
+      - name: postgres-data
+        path: /var/lib/postgresql/data
+        size: ${STORAGE_SIZE}
+    health_check:
+      type: exec
+      command: ["pg_isready", "-U", "${POSTGRES_USER}"]
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    memory: ${MEMORY}
+    # TCP exposure for external access (disabled by default)
+    tcp_exposure:
+      enabled: ${EXPOSE_EXTERNAL}
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 5432
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

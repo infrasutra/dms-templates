@@ -6,19 +6,46 @@ MySQL is the world's most popular open-source relational database management sys
 
 | Property | Value |
 |----------|-------|
-| Image | `mysql:8.0` |
+| Image | `mysql:{VERSION}` |
 | Port | 3306 |
 | Category | Database |
 | Storage | 10Gi |
 
+## Supported Versions
+
+| Version | Status | Notes |
+|---------|--------|-------|
+| 8.4 | Latest | Innovation release |
+| 8.0 | Default | LTS, recommended for production |
+| 5.7 | Legacy | Extended support |
+| 5.6 | Legacy | Minimum supported |
+
 ## Configuration Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `MYSQL_ROOT_PASSWORD` | Yes | (auto-generated) | MySQL root user password |
-| `MYSQL_USER` | No | `app` | MySQL application user username |
-| `MYSQL_PASSWORD` | No | (auto-generated) | MySQL application user password |
-| `MYSQL_DATABASE` | No | `app` | Default database name to create |
+| Variable | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `VERSION` | string | No | `8.0` | MySQL version to deploy |
+| `EXPOSE_EXTERNAL` | boolean | No | `false` | Enable external access via TLSRoute |
+| `MYSQL_ROOT_PASSWORD` | secret | Yes | (auto-generated) | MySQL root user password |
+| `MYSQL_USER` | string | No | `app` | MySQL application user username |
+| `MYSQL_PASSWORD` | secret | Yes | (auto-generated) | MySQL application user password |
+| `MYSQL_DATABASE` | string | No | `app` | Default database name to create |
+
+## Version Override
+
+The `VERSION` variable allows you to select which MySQL version to deploy. You can override it at deploy time:
+
+```bash
+dmsctl deploy --set VERSION=8.4
+```
+
+Or in your `dms.yaml`:
+
+```yaml
+variables:
+  - key: VERSION
+    default: "8.4"
+```
 
 ## Storage
 
@@ -26,14 +53,15 @@ This template provisions a 10Gi persistent volume mounted at `/var/lib/mysql` fo
 
 ## Health Check
 
-The template uses `mysqladmin ping` for health checking, ensuring the database is ready to accept connections before marking the service as healthy.
+The template uses a TCP health check on port 3306 to ensure the database is ready to accept connections.
 
 ## Resource Defaults
 
-| Resource | Request | Limit |
-|----------|---------|-------|
-| CPU | 100m | 1000m |
-| Memory | 512Mi | 2Gi |
+| Resource | Value |
+|----------|-------|
+| CPU | 100m |
+| Memory | 512Mi |
+| Replicas | 1 |
 
 ## Connection
 
@@ -49,9 +77,25 @@ Or as root:
 mysql -h <service-host> -P 3306 -u root -p$MYSQL_ROOT_PASSWORD
 ```
 
+Connection string format:
+```
+mysql://$MYSQL_USER:$MYSQL_PASSWORD@<service-host>:3306/$MYSQL_DATABASE
+```
+
+## External Access
+
+By default, MySQL is only accessible within the cluster (internal only). To enable external access via TLSRoute:
+
+```bash
+dmsctl deploy --template mysql --set EXPOSE_EXTERNAL=true
+```
+
+When enabled, the service will be accessible at `{name}-{stage}.{domain}:3306` with TLS termination at the gateway. The gateway handles TLS encryption and forwards plain TCP to MySQL.
+
 ## Notes
 
-- Both root and application user credentials are auto-generated if not provided
-- Passwords are stored as secrets
+- Both root and application user passwords are auto-generated and stored as Kubernetes secrets
 - Data persists across restarts using the provisioned volume
 - The application user has full privileges on the specified database
+- All versions use the same configuration, only the image tag changes
+- External access is disabled by default for security
