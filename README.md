@@ -6,9 +6,9 @@ Official default templates for the DMS (Deployment Management Stack) platform. T
 
 | Template | Description | Versions | Default |
 |----------|-------------|----------|---------|
-| [PostgreSQL](./postgres/) | PostgreSQL database with Alpine Linux | 13, 14, 15, 16, 17, 18 | 16 |
-| [Redis](./redis/) | Redis in-memory data store with AOF persistence | 6, 7, 8 | 7 |
-| [MySQL](./mysql/) | MySQL relational database | 5.6, 5.7, 8.0, 8.4 | 8.0 |
+| [PostgreSQL](./postgres/) | PostgreSQL database with Alpine Linux | 14, 15, 16, 17 | 16 |
+| [Redis](./redis/) | Redis in-memory data store with AOF persistence | 6.2, 7.2, 7.4 | 7.2 |
+| [MySQL](./mysql/) | MySQL relational database | 5.7, 8.0, 8.4 | 8.0 |
 
 ## Usage
 
@@ -21,25 +21,15 @@ Templates can be registered in DMS and deployed to any stage within your project
 dmsctl deploy --template postgres
 
 # Deploy with specific version
-dmsctl deploy --template postgres --set VERSION=17
+dmsctl deploy --template postgres --version 17
 
 # Deploy with custom configuration
-dmsctl deploy --template postgres --set VERSION=16 --set POSTGRES_DB=myapp
+dmsctl deploy --template postgres --set POSTGRES_DB=myapp --set MEMORY=512
 ```
 
 ### Version Selection
 
-All templates support the `VERSION` variable to select which software version to deploy. The version can be overridden:
-
-1. **At deploy time** via `--set VERSION=<version>`
-2. **In dms.yaml** via variables section
-3. **In DMS UI** via the version dropdown
-
-If not specified, the `defaultVersion` is used.
-
-### Registering a Template
-
-Templates from this repository can be registered in DMS by pointing to the GitHub repository URL.
+All templates support version selection via the `--version` flag or through the DMS UI. The version is interpolated into the container image tag using `${VERSION}`.
 
 ### Template Structure
 
@@ -71,50 +61,52 @@ versions:
   - "6"
 defaultVersion: "7"
 
-# Variables (VERSION is reserved for version selection)
+# Variables
 variables:
-  - key: VERSION
-    type: string
-    description: Software version to deploy
-    configurable: true
-    options:
-      - "8"
-      - "7"
-      - "6"
-    default: "7"
   - key: MY_VAR
+    type: string
+    description: Variable description
+    default: "value"
+    configurable: true
+  - key: MY_SECRET
     type: secret
     generator: password
 
 # Service definitions
 services:
   - name: service-name
-    type: worker
+    type: statefulset
     image: "image:${VERSION}"
     ports:
       - port: 1234
     env:
       - key: MY_VAR
+      - key: MY_SECRET
     volumes:
       - name: data
         path: /data
         size: 10240
     health_check:
-      port: 1234
+      type: exec
+      command: ["health-check-command"]
+      initial_delay: 10
       interval: 10
       timeout: 5
       retries: 3
+    resources:
+      cpu: 100
+      memory: 256
 ```
 
 ## Key Concepts
 
 ### VERSION Variable
 
-The `VERSION` variable is a reserved variable that controls which software version to deploy:
+The `VERSION` variable is automatically available based on the `versions` array:
 
 - Defined in `versions` array at the spec level
 - Default specified by `defaultVersion`
-- Can be overridden at deploy time
+- Can be overridden at deploy time via `--version`
 - Used in image tags via `${VERSION}` interpolation
 
 ### Variable Types
@@ -122,10 +114,9 @@ The `VERSION` variable is a reserved variable that controls which software versi
 | Type | Description |
 |------|-------------|
 | `string` | Plain text value |
-| `secret` | Sensitive value stored in Kubernetes secrets |
+| `secret` | Sensitive value stored encrypted |
 | `integer` | Numeric value |
 | `boolean` | True/false value |
-| `reference` | Reference to another service's output |
 
 ### Generators
 
@@ -134,7 +125,24 @@ The `VERSION` variable is a reserved variable that controls which software versi
 | `password` | Generate a random password |
 | `secret` | Generate a random secret string |
 | `uuid` | Generate a UUID |
-| `random_int` | Generate a random integer |
+
+### Service Types
+
+| Type | Description |
+|------|-------------|
+| `statefulset` | StatefulSet with persistent storage (databases, caches) |
+| `deployment` | Deployment for stateless workloads |
+| `cronjob` | CronJob for scheduled tasks |
+
+### Resources
+
+All templates include configurable resource allocations:
+
+| Variable | Description | Unit |
+|----------|-------------|------|
+| `CPU` | CPU allocation | millicores |
+| `MEMORY` | Memory allocation | MB |
+| `STORAGE_SIZE` | Persistent volume size | MB |
 
 ### TCP Exposure (External Access)
 
@@ -142,11 +150,11 @@ Database and cache templates support optional external access via Gateway API TL
 
 ```yaml
 tcp_exposure:
-  enabled: ${EXPOSE_EXTERNAL}  # Controlled by EXPOSE_EXTERNAL variable
+  enabled: ${EXPOSE_EXTERNAL}
   hostname: "${NAME}-${STAGE}.${DOMAIN}"
   port: 5432
   tls:
-    mode: terminate  # Gateway terminates TLS, forwards plain TCP
+    mode: terminate
   gateway:
     name: dms-gateway
     namespace: dms-system

@@ -1,5 +1,4 @@
 version: "1"
-kind: template
 
 # Template metadata
 name: mysql
@@ -12,28 +11,15 @@ tags:
   - relational
   - mysql
 
-# Supported versions (can be overridden via VERSION variable)
+# Supported versions
 versions:
   - "8.4"
   - "8.0"
   - "5.7"
-  - "5.6"
 defaultVersion: "8.0"
 
-# Global variables
+# Variables
 variables:
-  # Version selection
-  - key: VERSION
-    type: string
-    description: MySQL version to deploy
-    configurable: true
-    options:
-      - "8.4"
-      - "8.0"
-      - "5.7"
-      - "5.6"
-    default: "8.0"
-
   # Database credentials
   - key: MYSQL_ROOT_PASSWORD
     type: secret
@@ -52,29 +38,10 @@ variables:
     description: Default database name to create
     default: app
 
-  # Resource configuration (configurable with smart defaults)
-  - key: STORAGE_SIZE
-    type: integer
-    description: Storage size in MB
-    configurable: true
-    default: 10240
-  - key: MEMORY
-    type: integer
-    description: Memory allocation in MB
-    configurable: true
-    default: 512
-
-  # Networking
-  - key: EXPOSE_EXTERNAL
-    type: boolean
-    description: Enable external access via TLSRoute (internal only by default)
-    configurable: true
-    default: false
-
 # Service definitions
 services:
   - name: mysql
-    type: worker
+    type: statefulset
     image: "mysql:${VERSION}"
     ports:
       - port: 3306
@@ -86,19 +53,19 @@ services:
     volumes:
       - name: mysql-data
         path: /var/lib/mysql
-        size: ${STORAGE_SIZE}
+        size: 10240
     health_check:
       type: exec
       command: ["mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      initial_delay: 15
+      initial_delay: 30
       interval: 10
       timeout: 5
       retries: 3
-    memory: ${MEMORY}
-    # TCP exposure for external access (disabled by default)
+    resources:
+      cpu: 200
+      memory: 512
     tcp_exposure:
-      enabled: ${EXPOSE_EXTERNAL}
-      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      enabled: false
       port: 3306
       tls:
         mode: terminate

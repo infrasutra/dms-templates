@@ -1,5 +1,4 @@
 version: "1"
-kind: template
 
 # Template metadata
 name: postgres
@@ -12,32 +11,17 @@ tags:
   - relational
   - postgresql
 
-# Supported versions (can be overridden via VERSION variable)
+# Supported versions
 versions:
   - "18"
   - "17"
   - "16"
   - "15"
   - "14"
-  - "13"
-defaultVersion: "16"
+defaultVersion: "17"
 
-# Global variables
+# Variables
 variables:
-  # Version selection
-  - key: VERSION
-    type: string
-    description: PostgreSQL version to deploy
-    configurable: true
-    options:
-      - "18"
-      - "17"
-      - "16"
-      - "15"
-      - "14"
-      - "13"
-    default: "16"
-
   # Database credentials
   - key: POSTGRES_USER
     type: string
@@ -50,31 +34,13 @@ variables:
   - key: POSTGRES_DB
     type: string
     description: Default database name to create
-    default: postgres
+    default: app
 
-  # Resource configuration (configurable with smart defaults)
-  - key: STORAGE_SIZE
-    type: integer
-    description: Storage size in MB
-    configurable: true
-    default: 10240
-  - key: MEMORY
-    type: integer
-    description: Memory allocation in MB
-    configurable: true
-    default: 256
-
-  # Networking
-  - key: EXPOSE_EXTERNAL
-    type: boolean
-    description: Enable external access via TLSRoute (internal only by default)
-    configurable: true
-    default: false
 
 # Service definitions
 services:
   - name: postgres
-    type: worker
+    type: statefulset
     image: "postgres:${VERSION}-alpine"
     ports:
       - port: 5432
@@ -85,7 +51,7 @@ services:
     volumes:
       - name: postgres-data
         path: /var/lib/postgresql/data
-        size: ${STORAGE_SIZE}
+        size: 10240
     health_check:
       type: exec
       command: ["pg_isready", "-U", "${POSTGRES_USER}"]
@@ -93,10 +59,11 @@ services:
       interval: 10
       timeout: 5
       retries: 3
-    memory: ${MEMORY}
-    # TCP exposure for external access (disabled by default)
+    resources:
+      cpu: 100
+      memory: 256
     tcp_exposure:
-      enabled: ${EXPOSE_EXTERNAL}
+      enabled: fase
       hostname: "${NAME}-${STAGE}.${DOMAIN}"
       port: 5432
       tls:

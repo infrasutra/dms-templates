@@ -1,5 +1,4 @@
 version: "1"
-kind: template
 
 # Template metadata
 name: redis
@@ -13,60 +12,24 @@ tags:
   - key-value
   - redis
 
-# Supported versions (can be overridden via VERSION variable)
+# Supported versions
 versions:
-  - "8"
-  - "7"
-  - "6"
-defaultVersion: "7"
+  - "7.4"
+  - "7.2"
+  - "6.2"
+defaultVersion: "7.2"
 
-# Global variables
+# Variables
 variables:
-  # Version selection
-  - key: VERSION
-    type: string
-    description: Redis version to deploy
-    configurable: true
-    options:
-      - "8"
-      - "7"
-      - "6"
-    default: "7"
-
   # Authentication
   - key: REDIS_PASSWORD
     type: secret
     description: Redis authentication password
     generator: password
 
-  # Resource configuration (configurable with smart defaults)
-  - key: STORAGE_SIZE
-    type: integer
-    description: Storage size in MB
-    configurable: true
-    default: 5120
-  - key: MEMORY
-    type: integer
-    description: Memory allocation in MB
-    configurable: true
-    default: 128
-  - key: CPU
-    type: integer
-    description: CPU allocation in millicores
-    configurable: true
-    default: 50
-
-  # Networking
-  - key: EXPOSE_EXTERNAL
-    type: boolean
-    description: Enable external access via TLSRoute (internal only by default)
-    configurable: true
-    default: false
-
-# Service definitions
 services:
   - name: redis
-    type: worker
+    type: statefulset
     image: "redis:${VERSION}-alpine"
     ports:
       - port: 6379
@@ -74,6 +37,11 @@ services:
       - redis-server
       - --appendonly
       - "yes"
+      - --save
+      - "60"
+      - "1"
+      - --loglevel
+      - warning
       - --requirepass
       - ${REDIS_PASSWORD}
     env:
@@ -81,7 +49,7 @@ services:
     volumes:
       - name: redis-data
         path: /data
-        size: ${STORAGE_SIZE}
+        size: 1024
     health_check:
       type: exec
       command: ["redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
@@ -89,12 +57,11 @@ services:
       interval: 10
       timeout: 3
       retries: 3
-    cpu: ${CPU}
-    memory: ${MEMORY}
-    # TCP exposure for external access (disabled by default)
+    resources:
+      cpu: 50
+      memory: 128
     tcp_exposure:
-      enabled: ${EXPOSE_EXTERNAL}
-      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      enabled: false
       port: 6379
       tls:
         mode: terminate
