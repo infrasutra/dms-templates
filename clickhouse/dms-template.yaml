@@ -1,0 +1,63 @@
+version: "1"
+
+# Template metadata
+name: clickhouse
+description: ClickHouse is a fast, open-source columnar database management system designed for online analytical processing (OLAP) with exceptional query performance.
+icon: https://clickhouse.com/images/ch_logo.svg
+category: analytics
+tags:
+  - database
+  - analytics
+  - olap
+  - columnar
+  - clickhouse
+
+# Supported versions
+versions:
+  - "24.3"
+  - "24.1"
+  - "23.12"
+defaultVersion: "24.3"
+
+# Service definitions
+services:
+  - name: clickhouse
+    type: worker
+    image: "clickhouse/clickhouse-server:${VERSION}"
+    ports:
+      - port: 9000
+      - port: 8123
+    env:
+      - key: CLICKHOUSE_USER
+        default: default
+        configurable: true
+        description: ClickHouse user username
+      - key: CLICKHOUSE_PASSWORD
+        generator: password
+        description: ClickHouse user password
+      - key: CLICKHOUSE_DB
+        default: default
+        configurable: true
+        description: Default database name
+    volumes:
+      - name: clickhouse-data
+        path: /var/lib/clickhouse
+        size: 10240
+    health_check:
+      type: exec
+      command: ["clickhouse-client", "--query", "SELECT 1"]
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 9000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

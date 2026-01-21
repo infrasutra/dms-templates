@@ -1,0 +1,57 @@
+version: "1"
+
+# Template metadata
+name: neo4j
+description: Neo4j is a highly scalable native graph database that enables powerful querying and analysis of connected data through its Cypher query language.
+icon: https://neo4j.com/wp-content/uploads/neo4j_logo.svg
+category: graph
+tags:
+  - database
+  - graph
+  - nosql
+  - neo4j
+  - cypher
+
+# Supported versions
+versions:
+  - "5"
+  - "4.4"
+defaultVersion: "5"
+
+# Service definitions
+services:
+  - name: neo4j
+    type: worker
+    image: "neo4j:${VERSION}"
+    ports:
+      - port: 7687
+      - port: 7474
+    env:
+      - key: NEO4J_PASSWORD
+        generator: password
+        description: Neo4j admin password
+      - key: NEO4J_AUTH
+        value: neo4j/${NEO4J_PASSWORD}
+        description: Neo4j authentication credentials
+    volumes:
+      - name: neo4j-data
+        path: /data
+        size: 10240
+    health_check:
+      type: exec
+      command: ["cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "RETURN 1"]
+      initial_delay: 30
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 7687
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

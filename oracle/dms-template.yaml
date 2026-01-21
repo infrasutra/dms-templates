@@ -1,0 +1,60 @@
+version: "1"
+
+# Template metadata
+name: oracle
+description: Oracle Database Express Edition (XE) is a free, lightweight version of Oracle Database, ideal for development, testing, and small-scale deployments.
+icon: https://raw.githubusercontent.com/docker-library/docs/master/oraclelinux/logo.png
+category: database
+tags:
+  - database
+  - sql
+  - relational
+  - oracle
+  - enterprise
+
+# Supported versions
+versions:
+  - "21-slim"
+  - "18-slim"
+defaultVersion: "21-slim"
+
+# Service definitions
+services:
+  - name: oracle
+    type: worker
+    image: "gvenzl/oracle-xe:${VERSION}"
+    ports:
+      - port: 1521
+    env:
+      - key: ORACLE_PASSWORD
+        generator: password
+        description: Oracle SYS and SYSTEM password
+      - key: APP_USER
+        default: app
+        configurable: true
+        description: Application user username
+      - key: APP_USER_PASSWORD
+        generator: password
+        description: Application user password
+    volumes:
+      - name: oracle-data
+        path: /opt/oracle/oradata
+        size: 10240
+    health_check:
+      type: exec
+      command: ["healthcheck.sh"]
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 500
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 1521
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

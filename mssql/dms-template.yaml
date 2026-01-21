@@ -1,0 +1,60 @@
+version: "1"
+
+# Template metadata
+name: mssql
+description: Microsoft SQL Server is a relational database management system developed by Microsoft, offering enterprise-grade performance, security, and business intelligence capabilities.
+icon: https://raw.githubusercontent.com/docker-library/docs/master/microsoft-sql-server/logo.png
+category: database
+tags:
+  - database
+  - sql
+  - relational
+  - mssql
+  - microsoft
+
+# Supported versions
+versions:
+  - "2022-latest"
+  - "2019-latest"
+defaultVersion: "2022-latest"
+
+# Service definitions
+services:
+  - name: mssql
+    type: worker
+    image: "mcr.microsoft.com/mssql/server:${VERSION}"
+    ports:
+      - port: 1433
+    env:
+      - key: ACCEPT_EULA
+        value: "Y"
+        description: Accept Microsoft SQL Server EULA
+      - key: MSSQL_SA_PASSWORD
+        generator: password
+        description: SQL Server SA (system administrator) password
+      - key: MSSQL_PID
+        default: Express
+        configurable: true
+        description: SQL Server edition (Express, Developer, Standard, Enterprise)
+    volumes:
+      - name: mssql-data
+        path: /var/opt/mssql
+        size: 10240
+    health_check:
+      type: exec
+      command: ["/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${MSSQL_SA_PASSWORD}", "-C", "-Q", "SELECT 1"]
+      initial_delay: 30
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 500
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 1433
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

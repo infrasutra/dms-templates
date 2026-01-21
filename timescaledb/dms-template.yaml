@@ -1,29 +1,29 @@
 version: "1"
 
 # Template metadata
-name: postgres
-description: PostgreSQL is a powerful, open-source object-relational database system with a strong reputation for reliability, feature robustness, and performance.
-icon: https://raw.githubusercontent.com/docker-library/docs/master/postgres/logo.png
-category: database
+name: timescaledb
+description: TimescaleDB is an open-source time-series database built on PostgreSQL, combining the reliability of SQL with optimizations for time-series data.
+icon: https://assets.timescale.com/docs/images/timescale-logo-light.svg
+category: time-series
 tags:
   - database
+  - time-series
   - sql
-  - relational
   - postgresql
+  - timescaledb
 
 # Supported versions
 versions:
-  - "17"
-  - "16"
-  - "15"
-  - "14"
-defaultVersion: "17"
+  - "latest-pg16"
+  - "2.14.2-pg16"
+  - "2.13.1-pg16"
+defaultVersion: "latest-pg16"
 
 # Service definitions
 services:
-  - name: postgres
+  - name: timescaledb
     type: worker
-    image: "postgres:${VERSION}-alpine"
+    image: "timescale/timescaledb:${VERSION}"
     ports:
       - port: 5432
     env:
@@ -39,7 +39,7 @@ services:
         configurable: true
         description: Default database name to create
     volumes:
-      - name: postgres-data
+      - name: timescaledb-data
         path: /var/lib/postgresql/data
         size: 10240
     health_check:
@@ -49,8 +49,8 @@ services:
       interval: 10
       timeout: 5
       retries: 3
-    cpu: 100
-    memory: 256
+    cpu: 200
+    memory: 512
     tcp_exposure:
       enabled: false
       hostname: "${NAME}-${STAGE}.${DOMAIN}"

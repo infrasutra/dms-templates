@@ -1,0 +1,59 @@
+version: "1"
+
+# Template metadata
+name: couchbase
+description: Couchbase is a distributed NoSQL cloud database that delivers unmatched versatility, performance, scalability, and financial value for modern applications.
+icon: https://www.couchbase.com/wp-content/uploads/2022/08/couchbase-logo.svg
+category: database
+tags:
+  - database
+  - nosql
+  - document
+  - key-value
+  - couchbase
+
+# Supported versions
+versions:
+  - "7.6"
+  - "7.2"
+  - "7.1"
+defaultVersion: "7.6"
+
+# Service definitions
+services:
+  - name: couchbase
+    type: worker
+    image: "couchbase:${VERSION}"
+    ports:
+      - port: 11210
+      - port: 8091
+    env:
+      - key: COUCHBASE_ADMINISTRATOR_USERNAME
+        default: Administrator
+        configurable: true
+        description: Couchbase administrator username
+      - key: COUCHBASE_ADMINISTRATOR_PASSWORD
+        generator: password
+        description: Couchbase administrator password
+    volumes:
+      - name: couchbase-data
+        path: /opt/couchbase/var
+        size: 10240
+    health_check:
+      type: exec
+      command: ["curl", "-s", "http://localhost:8091/pools"]
+      initial_delay: 30
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 500
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 11210
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

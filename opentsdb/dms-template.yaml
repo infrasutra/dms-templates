@@ -1,0 +1,52 @@
+version: "1"
+
+# Template metadata
+name: opentsdb
+description: OpenTSDB is a scalable, distributed time series database built on top of HBase, designed for storing and querying massive amounts of metrics data.
+icon: https://opentsdb.net/img/logo.svg
+category: time-series
+tags:
+  - database
+  - time-series
+  - metrics
+  - opentsdb
+  - hbase
+
+# Supported versions
+versions:
+  - "latest"
+defaultVersion: "latest"
+
+# Service definitions
+services:
+  - name: opentsdb
+    type: worker
+    image: "petergrace/opentsdb-docker:${VERSION}"
+    ports:
+      - port: 4242
+    env:
+      - key: WAITSECS
+        value: "30"
+        description: Seconds to wait for HBase to start
+    volumes:
+      - name: opentsdb-data
+        path: /data/hbase
+        size: 10240
+    health_check:
+      type: exec
+      command: ["curl", "-s", "http://localhost:4242/api/version"]
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 500
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 4242
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

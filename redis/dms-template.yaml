@@ -19,17 +19,10 @@ versions:
   - "6.2"
 defaultVersion: "7.2"
 
-# Variables
-variables:
-  # Authentication
-  - key: REDIS_PASSWORD
-    type: secret
-    description: Redis authentication password
-    generator: password
-
+# Service definitions
 services:
   - name: redis
-    type: statefulset
+    type: worker
     image: "redis:${VERSION}-alpine"
     ports:
       - port: 6379
@@ -46,6 +39,8 @@ services:
       - ${REDIS_PASSWORD}
     env:
       - key: REDIS_PASSWORD
+        generator: password
+        description: Redis authentication password
     volumes:
       - name: redis-data
         path: /data
@@ -57,11 +52,11 @@ services:
       interval: 10
       timeout: 3
       retries: 3
-    resources:
-      cpu: 50
-      memory: 128
+    cpu: 50
+    memory: 128
     tcp_exposure:
       enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
       port: 6379
       tls:
         mode: terminate

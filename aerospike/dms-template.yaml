@@ -1,0 +1,59 @@
+version: "1"
+
+# Template metadata
+name: aerospike
+description: Aerospike is a high-performance, distributed NoSQL database optimized for real-time, mission-critical applications requiring low latency and high throughput.
+icon: https://aerospike.com/wp-content/uploads/2021/03/aerospike-logo.svg
+category: database
+tags:
+  - database
+  - nosql
+  - key-value
+  - aerospike
+  - real-time
+
+# Supported versions
+versions:
+  - "ce-7.1"
+  - "ce-7.0"
+  - "ce-6.4"
+defaultVersion: "ce-7.1"
+
+# Service definitions
+services:
+  - name: aerospike
+    type: worker
+    image: "aerospike:${VERSION}"
+    ports:
+      - port: 3000
+    env:
+      - key: NAMESPACE
+        default: test
+        configurable: true
+        description: Aerospike namespace name
+      - key: STORAGE_GB
+        default: "1"
+        configurable: true
+        description: Storage size in gigabytes
+    volumes:
+      - name: aerospike-data
+        path: /opt/aerospike/data
+        size: 10240
+    health_check:
+      type: exec
+      command: ["asinfo", "-v", "status"]
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 3000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

@@ -1,52 +1,54 @@
 version: "1"
 
 # Template metadata
-name: mysql
-description: MySQL is the world's most popular open-source relational database management system, known for its speed, reliability, and ease of use.
-icon: https://raw.githubusercontent.com/docker-library/docs/master/mysql/logo.png
+name: mariadb
+description: MariaDB is a community-developed, commercially supported fork of MySQL, offering high compatibility, enhanced features, and improved performance.
+icon: https://raw.githubusercontent.com/docker-library/docs/master/mariadb/logo.png
 category: database
 tags:
   - database
   - sql
   - relational
-  - mysql
+  - mariadb
+  - mysql-compatible
 
 # Supported versions
 versions:
-  - "8.4"
-  - "8.0"
-  - "5.7"
-defaultVersion: "8.0"
+  - "11.4"
+  - "11.2"
+  - "10.11"
+  - "10.6"
+defaultVersion: "11.4"
 
 # Service definitions
 services:
-  - name: mysql
+  - name: mariadb
     type: worker
-    image: "mysql:${VERSION}"
+    image: "mariadb:${VERSION}"
     ports:
       - port: 3306
     env:
-      - key: MYSQL_ROOT_PASSWORD
+      - key: MARIADB_ROOT_PASSWORD
         generator: password
-        description: MySQL root user password
-      - key: MYSQL_USER
+        description: MariaDB root user password
+      - key: MARIADB_USER
         default: app
         configurable: true
-        description: MySQL application user username
-      - key: MYSQL_PASSWORD
+        description: MariaDB application user username
+      - key: MARIADB_PASSWORD
         generator: password
-        description: MySQL application user password
-      - key: MYSQL_DATABASE
+        description: MariaDB application user password
+      - key: MARIADB_DATABASE
         default: app
         configurable: true
         description: Default database name to create
     volumes:
-      - name: mysql-data
+      - name: mariadb-data
         path: /var/lib/mysql
         size: 10240
     health_check:
       type: exec
-      command: ["mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      command: ["healthcheck.sh", "--connect", "--innodb_initialized"]
       initial_delay: 30
       interval: 10
       timeout: 5

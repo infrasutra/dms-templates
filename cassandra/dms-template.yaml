@@ -1,0 +1,63 @@
+version: "1"
+
+# Template metadata
+name: cassandra
+description: Apache Cassandra is a highly scalable, distributed NoSQL database designed for handling large amounts of data across many commodity servers with no single point of failure.
+icon: https://cassandra.apache.org/_/img/cassandra-logo.svg
+category: database
+tags:
+  - database
+  - nosql
+  - wide-column
+  - cassandra
+  - distributed
+
+# Supported versions
+versions:
+  - "5.0"
+  - "4.1"
+  - "4.0"
+defaultVersion: "5.0"
+
+# Service definitions
+services:
+  - name: cassandra
+    type: worker
+    image: "cassandra:${VERSION}"
+    ports:
+      - port: 9042
+    env:
+      - key: CASSANDRA_CLUSTER_NAME
+        default: DMS Cluster
+        configurable: true
+        description: Cassandra cluster name
+      - key: CASSANDRA_DC
+        default: dc1
+        configurable: true
+        description: Cassandra datacenter name
+      - key: CASSANDRA_RACK
+        default: rack1
+        configurable: true
+        description: Cassandra rack name
+    volumes:
+      - name: cassandra-data
+        path: /var/lib/cassandra
+        size: 10240
+    health_check:
+      type: exec
+      command: ["cqlsh", "-e", "SELECT now() FROM system.local"]
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 500
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 9042
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

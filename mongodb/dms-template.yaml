@@ -1,0 +1,61 @@
+version: "1"
+
+# Template metadata
+name: mongodb
+description: MongoDB is a popular NoSQL document database known for its flexibility, scalability, and powerful query capabilities for modern applications.
+icon: https://raw.githubusercontent.com/docker-library/docs/master/mongo/logo.png
+category: database
+tags:
+  - database
+  - nosql
+  - document
+  - mongodb
+
+# Supported versions
+versions:
+  - "7"
+  - "6"
+  - "5"
+defaultVersion: "7"
+
+# Service definitions
+services:
+  - name: mongodb
+    type: worker
+    image: "mongo:${VERSION}"
+    ports:
+      - port: 27017
+    env:
+      - key: MONGO_INITDB_ROOT_USERNAME
+        default: admin
+        configurable: true
+        description: MongoDB root username
+      - key: MONGO_INITDB_ROOT_PASSWORD
+        generator: password
+        description: MongoDB root password
+      - key: MONGO_INITDB_DATABASE
+        default: app
+        configurable: true
+        description: Default database name to create
+    volumes:
+      - name: mongodb-data
+        path: /data/db
+        size: 10240
+    health_check:
+      type: exec
+      command: ["mongosh", "--eval", "db.adminCommand('ping')"]
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 27017
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

@@ -1,0 +1,65 @@
+version: "1"
+
+# Template metadata
+name: elasticsearch
+description: Elasticsearch is a distributed, RESTful search and analytics engine capable of addressing a growing number of use cases for logs, metrics, and application search.
+icon: https://raw.githubusercontent.com/docker-library/docs/master/elasticsearch/logo.png
+category: search
+tags:
+  - database
+  - search
+  - analytics
+  - elasticsearch
+  - full-text
+
+# Supported versions
+versions:
+  - "8.13.0"
+  - "8.12.0"
+  - "7.17.18"
+defaultVersion: "8.13.0"
+
+# Service definitions
+services:
+  - name: elasticsearch
+    type: worker
+    image: "elasticsearch:${VERSION}"
+    ports:
+      - port: 9300
+      - port: 9200
+    env:
+      - key: discovery.type
+        value: single-node
+        description: Elasticsearch discovery type for single-node deployment
+      - key: xpack.security.enabled
+        value: "true"
+        description: Enable X-Pack security features
+      - key: ELASTIC_PASSWORD
+        generator: password
+        description: Elasticsearch elastic user password
+      - key: ES_JAVA_OPTS
+        default: "-Xms512m -Xmx512m"
+        configurable: true
+        description: Java heap size options
+    volumes:
+      - name: elasticsearch-data
+        path: /usr/share/elasticsearch/data
+        size: 10240
+    health_check:
+      type: exec
+      command: ["curl", "-s", "-u", "elastic:${ELASTIC_PASSWORD}", "http://localhost:9200/_cluster/health"]
+      initial_delay: 30
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 500
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 9200
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

@@ -1,0 +1,62 @@
+version: "1"
+
+# Template metadata
+name: opensearch
+description: OpenSearch is a community-driven, open-source search and analytics suite derived from Elasticsearch, offering powerful full-text search and log analytics capabilities.
+icon: https://opensearch.org/assets/brand/PNG/Logo/opensearch_logo_default.png
+category: search
+tags:
+  - database
+  - search
+  - analytics
+  - opensearch
+  - full-text
+
+# Supported versions
+versions:
+  - "2.13.0"
+  - "2.12.0"
+  - "1.3.15"
+defaultVersion: "2.13.0"
+
+# Service definitions
+services:
+  - name: opensearch
+    type: worker
+    image: "opensearchproject/opensearch:${VERSION}"
+    ports:
+      - port: 9300
+      - port: 9200
+    env:
+      - key: discovery.type
+        value: single-node
+        description: OpenSearch discovery type for single-node deployment
+      - key: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+        generator: password
+        description: OpenSearch admin user password
+      - key: OPENSEARCH_JAVA_OPTS
+        default: "-Xms512m -Xmx512m"
+        configurable: true
+        description: Java heap size options
+    volumes:
+      - name: opensearch-data
+        path: /usr/share/opensearch/data
+        size: 10240
+    health_check:
+      type: exec
+      command: ["curl", "-s", "-k", "-u", "admin:${OPENSEARCH_INITIAL_ADMIN_PASSWORD}", "https://localhost:9200/_cluster/health"]
+      initial_delay: 30
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 500
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 9200
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

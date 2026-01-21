@@ -1,0 +1,68 @@
+version: "1"
+
+# Template metadata
+name: influxdb
+description: InfluxDB is an open-source time series database designed for high-performance storage and retrieval of time-stamped data, metrics, and events.
+icon: https://raw.githubusercontent.com/docker-library/docs/master/influxdb/logo.png
+category: time-series
+tags:
+  - database
+  - time-series
+  - metrics
+  - influxdb
+  - monitoring
+
+# Supported versions
+versions:
+  - "2.7"
+  - "2.6"
+defaultVersion: "2.7"
+
+# Service definitions
+services:
+  - name: influxdb
+    type: worker
+    image: "influxdb:${VERSION}"
+    ports:
+      - port: 8086
+    env:
+      - key: DOCKER_INFLUXDB_INIT_MODE
+        value: setup
+        description: InfluxDB initialization mode
+      - key: DOCKER_INFLUXDB_INIT_USERNAME
+        default: admin
+        configurable: true
+        description: InfluxDB admin username
+      - key: DOCKER_INFLUXDB_INIT_PASSWORD
+        generator: password
+        description: InfluxDB admin password
+      - key: DOCKER_INFLUXDB_INIT_ORG
+        default: dms
+        configurable: true
+        description: InfluxDB organization name
+      - key: DOCKER_INFLUXDB_INIT_BUCKET
+        default: default
+        configurable: true
+        description: InfluxDB default bucket name
+    volumes:
+      - name: influxdb-data
+        path: /var/lib/influxdb2
+        size: 10240
+    health_check:
+      type: exec
+      command: ["influx", "ping"]
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8086
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system
