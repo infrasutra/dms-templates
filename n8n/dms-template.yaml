@@ -1,0 +1,99 @@
+version: "1"
+
+# Template metadata
+name: n8n
+description: n8n is a powerful workflow automation tool that lets you connect apps and automate tasks, offering a self-hosted alternative to Zapier with 200+ integrations.
+icon: https://raw.githubusercontent.com/n8n-io/n8n/master/packages/design-system/src/assets/n8n-icon.svg
+category: automation
+tags:
+  - automation
+  - workflow
+  - integration
+  - zapier-alternative
+  - no-code
+
+# Supported versions
+versions:
+  - "1.70"
+  - "1.60"
+  - "1.50"
+defaultVersion: "1.70"
+
+# Service definitions
+services:
+  - name: n8n
+    type: web
+    image: "n8nio/n8n:${VERSION}.0"
+    ports:
+      - port: 5678
+    env:
+      - key: N8N_BASIC_AUTH_ACTIVE
+        default: "true"
+        configurable: true
+        description: Enable basic authentication
+      - key: N8N_BASIC_AUTH_USER
+        default: admin
+        configurable: true
+        description: Basic auth username
+      - key: N8N_BASIC_AUTH_PASSWORD
+        generator: password
+        description: Basic auth password
+      - key: N8N_ENCRYPTION_KEY
+        generator: password
+        description: Key for encrypting credentials
+      - key: DB_TYPE
+        value: postgresdb
+        description: Database type
+      - key: DB_POSTGRESDB_HOST
+        configurable: true
+        description: PostgreSQL host
+      - key: DB_POSTGRESDB_PORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: DB_POSTGRESDB_DATABASE
+        default: n8n
+        configurable: true
+        description: Database name
+      - key: DB_POSTGRESDB_USER
+        default: n8n
+        configurable: true
+        description: Database username
+      - key: DB_POSTGRESDB_PASSWORD
+        generator: password
+        description: Database password
+      - key: N8N_HOST
+        default: "localhost"
+        configurable: true
+        description: Host name for n8n
+      - key: N8N_PROTOCOL
+        default: "http"
+        configurable: true
+        description: Protocol (http or https)
+      - key: WEBHOOK_URL
+        default: "http://localhost:5678/"
+        configurable: true
+        description: URL for webhooks
+    volumes:
+      - name: n8n-data
+        path: /home/node/.n8n
+        size: 5120
+    health_check:
+      type: http
+      path: /healthz
+      port: 5678
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 5678
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

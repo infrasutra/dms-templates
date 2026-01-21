@@ -1,0 +1,80 @@
+version: "1"
+
+# Template metadata
+name: ghost
+description: Ghost is a powerful, modern publishing platform for creating professional blogs and publications with a clean, minimalist interface.
+icon: https://raw.githubusercontent.com/docker-library/docs/master/ghost/logo.png
+category: cms
+tags:
+  - cms
+  - blogging
+  - publishing
+  - newsletter
+  - content-management
+
+# Supported versions
+versions:
+  - "5"
+  - "4"
+defaultVersion: "5"
+
+# Service definitions
+services:
+  - name: ghost
+    type: web
+    image: "ghost:${VERSION}"
+    ports:
+      - port: 2368
+    env:
+      - key: url
+        default: "http://localhost:2368"
+        configurable: true
+        description: Public URL of the Ghost site
+      - key: database__client
+        value: mysql
+        description: Database client type
+      - key: database__connection__host
+        configurable: true
+        description: MySQL/MariaDB host
+      - key: database__connection__port
+        default: "3306"
+        configurable: true
+        description: MySQL/MariaDB port
+      - key: database__connection__user
+        default: ghost
+        configurable: true
+        description: Database username
+      - key: database__connection__password
+        generator: password
+        description: Database password
+      - key: database__connection__database
+        default: ghost
+        configurable: true
+        description: Database name
+      - key: mail__transport
+        default: "Direct"
+        configurable: true
+        description: Mail transport method (SMTP, Direct)
+    volumes:
+      - name: ghost-content
+        path: /var/lib/ghost/content
+        size: 10240
+    health_check:
+      type: http
+      path: /ghost/api/v4/admin/site/
+      port: 2368
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 2368
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

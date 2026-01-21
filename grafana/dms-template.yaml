@@ -1,0 +1,80 @@
+version: "1"
+
+# Template metadata
+name: grafana
+description: Grafana is the leading open-source platform for monitoring and observability, providing powerful dashboards and visualizations for metrics, logs, and traces.
+icon: https://raw.githubusercontent.com/grafana/grafana/main/public/img/grafana_icon.svg
+category: monitoring
+tags:
+  - monitoring
+  - observability
+  - dashboards
+  - visualization
+  - metrics
+
+# Supported versions
+versions:
+  - "10.3"
+  - "10.2"
+  - "10.1"
+defaultVersion: "10.3"
+
+# Service definitions
+services:
+  - name: grafana
+    type: web
+    image: "grafana/grafana:${VERSION}.0"
+    ports:
+      - port: 3000
+    env:
+      - key: GF_SECURITY_ADMIN_USER
+        default: admin
+        configurable: true
+        description: Admin username
+      - key: GF_SECURITY_ADMIN_PASSWORD
+        generator: password
+        description: Admin password
+      - key: GF_DATABASE_TYPE
+        value: postgres
+        description: Database type
+      - key: GF_DATABASE_HOST
+        configurable: true
+        description: PostgreSQL host and port
+      - key: GF_DATABASE_NAME
+        default: grafana
+        configurable: true
+        description: Database name
+      - key: GF_DATABASE_USER
+        default: grafana
+        configurable: true
+        description: Database username
+      - key: GF_DATABASE_PASSWORD
+        generator: password
+        description: Database password
+      - key: GF_INSTALL_PLUGINS
+        default: ""
+        configurable: true
+        description: Comma-separated list of plugins to install
+    volumes:
+      - name: grafana-data
+        path: /var/lib/grafana
+        size: 5120
+    health_check:
+      type: http
+      path: /api/health
+      port: 3000
+      initial_delay: 15
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 3000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

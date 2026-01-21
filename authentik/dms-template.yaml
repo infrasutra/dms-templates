@@ -1,0 +1,128 @@
+version: "1"
+
+# Template metadata
+name: authentik
+description: authentik is an open-source identity provider offering SSO, MFA, user management, and application proxying with support for SAML, OAuth2, and LDAP.
+icon: https://raw.githubusercontent.com/goauthentik/authentik/main/web/icons/icon.svg
+category: security
+tags:
+  - security
+  - identity
+  - sso
+  - authentication
+  - oauth
+  - ldap
+
+# Supported versions
+versions:
+  - "2024.2"
+  - "2024.1"
+  - "2023.10"
+defaultVersion: "2024.2"
+
+# Service definitions
+services:
+  - name: authentik-server
+    type: web
+    image: "ghcr.io/goauthentik/server:${VERSION}"
+    command:
+      - server
+    ports:
+      - port: 9000
+      - port: 9443
+    env:
+      - key: AUTHENTIK_SECRET_KEY
+        generator: password
+        description: Secret key for encryption
+      - key: AUTHENTIK_POSTGRESQL__HOST
+        configurable: true
+        description: PostgreSQL host
+      - key: AUTHENTIK_POSTGRESQL__PORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: AUTHENTIK_POSTGRESQL__NAME
+        default: authentik
+        configurable: true
+        description: Database name
+      - key: AUTHENTIK_POSTGRESQL__USER
+        default: authentik
+        configurable: true
+        description: Database username
+      - key: AUTHENTIK_POSTGRESQL__PASSWORD
+        generator: password
+        description: Database password
+      - key: AUTHENTIK_REDIS__HOST
+        configurable: true
+        description: Redis host
+      - key: AUTHENTIK_REDIS__PORT
+        default: "6379"
+        configurable: true
+        description: Redis port
+      - key: AUTHENTIK_ERROR_REPORTING__ENABLED
+        default: "false"
+        configurable: true
+        description: Enable error reporting
+    volumes:
+      - name: authentik-media
+        path: /media
+        size: 5120
+      - name: authentik-templates
+        path: /templates
+        size: 512
+    health_check:
+      type: http
+      path: /-/health/live/
+      port: 9000
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 300
+    memory: 1024
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 9000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system
+
+  - name: authentik-worker
+    type: worker
+    image: "ghcr.io/goauthentik/server:${VERSION}"
+    command:
+      - worker
+    env:
+      - key: AUTHENTIK_SECRET_KEY
+        generator: password
+        description: Secret key for encryption
+      - key: AUTHENTIK_POSTGRESQL__HOST
+        configurable: true
+        description: PostgreSQL host
+      - key: AUTHENTIK_POSTGRESQL__PORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: AUTHENTIK_POSTGRESQL__NAME
+        default: authentik
+        configurable: true
+        description: Database name
+      - key: AUTHENTIK_POSTGRESQL__USER
+        default: authentik
+        configurable: true
+        description: Database username
+      - key: AUTHENTIK_POSTGRESQL__PASSWORD
+        generator: password
+        description: Database password
+      - key: AUTHENTIK_REDIS__HOST
+        configurable: true
+        description: Redis host
+    volumes:
+      - name: authentik-media
+        path: /media
+        size: 5120
+    cpu: 300
+    memory: 1024

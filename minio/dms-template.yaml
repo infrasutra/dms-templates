@@ -1,0 +1,63 @@
+version: "1"
+
+# Template metadata
+name: minio
+description: MinIO is a high-performance, S3-compatible object storage system designed for cloud-native workloads, AI/ML, and data lake architectures.
+icon: https://raw.githubusercontent.com/minio/minio/master/.github/logo.svg
+category: storage
+tags:
+  - storage
+  - object-storage
+  - s3-compatible
+  - cloud-native
+
+# Supported versions
+versions:
+  - "latest"
+  - "RELEASE.2024-01-01T00-00-00Z"
+defaultVersion: "latest"
+
+# Service definitions
+services:
+  - name: minio
+    type: web
+    image: "minio/minio:${VERSION}"
+    command:
+      - server
+      - /data
+      - --console-address
+      - ":9001"
+    ports:
+      - port: 9000
+      - port: 9001
+    env:
+      - key: MINIO_ROOT_USER
+        default: admin
+        configurable: true
+        description: MinIO root username for admin access
+      - key: MINIO_ROOT_PASSWORD
+        generator: password
+        description: MinIO root password for admin access
+    volumes:
+      - name: minio-data
+        path: /data
+        size: 51200
+    health_check:
+      type: http
+      path: /minio/health/live
+      port: 9000
+      initial_delay: 10
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 9000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

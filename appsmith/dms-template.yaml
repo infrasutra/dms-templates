@@ -1,0 +1,72 @@
+version: "1"
+
+# Template metadata
+name: appsmith
+description: Appsmith is an open-source platform for building internal tools and admin panels with a drag-and-drop interface and 45+ database/API integrations.
+icon: https://raw.githubusercontent.com/appsmithorg/appsmith/release/app/client/src/assets/images/appsmith_logo.svg
+category: lowcode
+tags:
+  - lowcode
+  - internal-tools
+  - admin-panel
+  - drag-and-drop
+  - dashboard
+
+# Supported versions
+versions:
+  - "latest"
+  - "v1.9"
+defaultVersion: "latest"
+
+# Service definitions
+services:
+  - name: appsmith
+    type: web
+    image: "appsmith/appsmith-ce:${VERSION}"
+    ports:
+      - port: 80
+      - port: 443
+    env:
+      - key: APPSMITH_ENCRYPTION_PASSWORD
+        generator: password
+        description: Encryption password for secrets
+      - key: APPSMITH_ENCRYPTION_SALT
+        generator: password
+        description: Encryption salt
+      - key: APPSMITH_MONGODB_URI
+        configurable: true
+        description: MongoDB connection URI
+      - key: APPSMITH_REDIS_URL
+        configurable: true
+        description: Redis connection URL
+      - key: APPSMITH_DISABLE_TELEMETRY
+        default: "true"
+        configurable: true
+        description: Disable anonymous telemetry
+      - key: APPSMITH_MAIL_ENABLED
+        default: "false"
+        configurable: true
+        description: Enable email functionality
+    volumes:
+      - name: appsmith-stacks
+        path: /appsmith-stacks
+        size: 10240
+    health_check:
+      type: http
+      path: /api/v1/health
+      port: 80
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 500
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 80
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

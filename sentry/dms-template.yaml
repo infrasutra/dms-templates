@@ -1,0 +1,151 @@
+version: "1"
+
+# Template metadata
+name: sentry
+description: Sentry is an error tracking and performance monitoring platform that helps developers discover, triage, and prioritize errors in real-time.
+icon: https://raw.githubusercontent.com/getsentry/sentry/master/src/sentry/static/sentry/images/sentry-avatar.png
+category: monitoring
+tags:
+  - monitoring
+  - error-tracking
+  - performance
+  - debugging
+  - apm
+
+# Supported versions
+versions:
+  - "24.1"
+  - "23.12"
+  - "latest"
+defaultVersion: "24.1"
+
+# Service definitions
+services:
+  - name: sentry-web
+    type: web
+    image: "getsentry/sentry:${VERSION}.0"
+    command:
+      - run
+      - web
+    ports:
+      - port: 9000
+    env:
+      - key: SENTRY_SECRET_KEY
+        generator: password
+        description: Secret key for signing
+      - key: SENTRY_POSTGRES_HOST
+        configurable: true
+        description: PostgreSQL host
+      - key: SENTRY_POSTGRES_PORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: SENTRY_DB_NAME
+        default: sentry
+        configurable: true
+        description: Database name
+      - key: SENTRY_DB_USER
+        default: sentry
+        configurable: true
+        description: Database username
+      - key: SENTRY_DB_PASSWORD
+        generator: password
+        description: Database password
+      - key: SENTRY_REDIS_HOST
+        configurable: true
+        description: Redis host
+      - key: SENTRY_REDIS_PORT
+        default: "6379"
+        configurable: true
+        description: Redis port
+      - key: SENTRY_USE_SSL
+        default: "false"
+        configurable: true
+        description: Use SSL for connections
+    volumes:
+      - name: sentry-data
+        path: /var/lib/sentry/files
+        size: 10240
+    health_check:
+      type: http
+      path: /_health/
+      port: 9000
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 500
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 9000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system
+
+  - name: sentry-worker
+    type: worker
+    image: "getsentry/sentry:${VERSION}.0"
+    command:
+      - run
+      - worker
+    env:
+      - key: SENTRY_SECRET_KEY
+        generator: password
+        description: Secret key for signing
+      - key: SENTRY_POSTGRES_HOST
+        configurable: true
+        description: PostgreSQL host
+      - key: SENTRY_DB_NAME
+        default: sentry
+        configurable: true
+        description: Database name
+      - key: SENTRY_DB_USER
+        default: sentry
+        configurable: true
+        description: Database username
+      - key: SENTRY_DB_PASSWORD
+        generator: password
+        description: Database password
+      - key: SENTRY_REDIS_HOST
+        configurable: true
+        description: Redis host
+    volumes:
+      - name: sentry-data
+        path: /var/lib/sentry/files
+        size: 10240
+    cpu: 300
+    memory: 1024
+
+  - name: sentry-cron
+    type: worker
+    image: "getsentry/sentry:${VERSION}.0"
+    command:
+      - run
+      - cron
+    env:
+      - key: SENTRY_SECRET_KEY
+        generator: password
+        description: Secret key for signing
+      - key: SENTRY_POSTGRES_HOST
+        configurable: true
+        description: PostgreSQL host
+      - key: SENTRY_DB_NAME
+        default: sentry
+        configurable: true
+        description: Database name
+      - key: SENTRY_DB_USER
+        default: sentry
+        configurable: true
+        description: Database username
+      - key: SENTRY_DB_PASSWORD
+        generator: password
+        description: Database password
+      - key: SENTRY_REDIS_HOST
+        configurable: true
+        description: Redis host
+    cpu: 100
+    memory: 512

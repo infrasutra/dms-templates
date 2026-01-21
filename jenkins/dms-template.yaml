@@ -1,0 +1,65 @@
+version: "1"
+
+# Template metadata
+name: jenkins
+description: Jenkins is the leading open-source automation server providing continuous integration and continuous delivery capabilities for building, testing, and deploying software.
+icon: https://raw.githubusercontent.com/jenkins-infra/jenkins.io/master/content/images/jenkins-icon.svg
+category: devops
+tags:
+  - devops
+  - ci-cd
+  - automation
+  - build
+  - continuous-integration
+
+# Supported versions
+versions:
+  - "lts"
+  - "lts-jdk17"
+  - "lts-jdk21"
+defaultVersion: "lts-jdk17"
+
+# Service definitions
+services:
+  - name: jenkins
+    type: web
+    image: "jenkins/jenkins:${VERSION}"
+    ports:
+      - port: 8080
+      - port: 50000
+    env:
+      - key: JENKINS_OPTS
+        default: "--httpPort=8080"
+        configurable: true
+        description: Jenkins startup options
+      - key: JAVA_OPTS
+        default: "-Xmx1024m -Xms512m"
+        configurable: true
+        description: JVM memory settings
+      - key: JENKINS_SLAVE_AGENT_PORT
+        default: "50000"
+        configurable: true
+        description: Port for Jenkins agents
+    volumes:
+      - name: jenkins-home
+        path: /var/jenkins_home
+        size: 20480
+    health_check:
+      type: http
+      path: /login
+      port: 8080
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 500
+    memory: 1024
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8080
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

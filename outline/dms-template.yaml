@@ -1,0 +1,88 @@
+version: "1"
+
+# Template metadata
+name: outline
+description: Outline is a fast, collaborative team knowledge base with markdown support, real-time editing, and integrations with Slack, Figma, and more.
+icon: https://raw.githubusercontent.com/outline/outline/main/public/images/logo.svg
+category: wiki
+tags:
+  - wiki
+  - documentation
+  - knowledge-base
+  - collaboration
+  - markdown
+
+# Supported versions
+versions:
+  - "0.75"
+  - "0.74"
+  - "latest"
+defaultVersion: "0.75"
+
+# Service definitions
+services:
+  - name: outline
+    type: web
+    image: "outlinewiki/outline:${VERSION}.0"
+    ports:
+      - port: 3000
+    env:
+      - key: SECRET_KEY
+        generator: password
+        description: Secret key for encryption (min 32 chars hex)
+      - key: UTILS_SECRET
+        generator: password
+        description: Utility secret key (min 32 chars hex)
+      - key: DATABASE_URL
+        configurable: true
+        description: PostgreSQL connection string
+      - key: REDIS_URL
+        configurable: true
+        description: Redis connection string
+      - key: URL
+        default: "http://localhost:3000"
+        configurable: true
+        description: Public URL of the Outline instance
+      - key: PORT
+        value: "3000"
+        description: Port to listen on
+      - key: AWS_ACCESS_KEY_ID
+        configurable: true
+        description: S3-compatible storage access key
+      - key: AWS_SECRET_ACCESS_KEY
+        generator: password
+        description: S3-compatible storage secret key
+      - key: AWS_S3_UPLOAD_BUCKET_URL
+        configurable: true
+        description: S3 bucket URL for file uploads
+      - key: AWS_S3_UPLOAD_BUCKET_NAME
+        default: outline
+        configurable: true
+        description: S3 bucket name
+      - key: FORCE_HTTPS
+        default: "false"
+        configurable: true
+        description: Force HTTPS redirects
+    volumes:
+      - name: outline-data
+        path: /var/lib/outline/data
+        size: 10240
+    health_check:
+      type: http
+      path: /_health
+      port: 3000
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 300
+    memory: 1024
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 3000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

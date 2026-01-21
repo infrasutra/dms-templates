@@ -1,0 +1,71 @@
+version: "1"
+
+# Template metadata
+name: wikijs
+description: Wiki.js is a powerful, modern wiki engine built on Node.js with a beautiful interface, full-text search, and extensive customization options.
+icon: https://raw.githubusercontent.com/requarks/wiki/main/assets/svg/logo.svg
+category: wiki
+tags:
+  - wiki
+  - documentation
+  - knowledge-base
+  - collaboration
+
+# Supported versions
+versions:
+  - "2"
+  - "2.5"
+defaultVersion: "2"
+
+# Service definitions
+services:
+  - name: wikijs
+    type: web
+    image: "ghcr.io/requarks/wiki:${VERSION}"
+    ports:
+      - port: 3000
+    env:
+      - key: DB_TYPE
+        value: postgres
+        description: Database type
+      - key: DB_HOST
+        configurable: true
+        description: PostgreSQL host
+      - key: DB_PORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: DB_NAME
+        default: wiki
+        configurable: true
+        description: Database name
+      - key: DB_USER
+        default: wiki
+        configurable: true
+        description: Database username
+      - key: DB_PASS
+        generator: password
+        description: Database password
+    volumes:
+      - name: wikijs-data
+        path: /wiki/data
+        size: 10240
+    health_check:
+      type: http
+      path: /healthz
+      port: 3000
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 3000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

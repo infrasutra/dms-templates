@@ -1,0 +1,90 @@
+version: "1"
+
+# Template metadata
+name: kafka
+description: Apache Kafka is a distributed event streaming platform for high-throughput, fault-tolerant, real-time data pipelines and streaming applications.
+icon: https://raw.githubusercontent.com/apache/kafka/trunk/docs/images/logo.svg
+category: messaging
+tags:
+  - messaging
+  - streaming
+  - event-streaming
+  - pub-sub
+  - data-pipeline
+
+# Supported versions
+versions:
+  - "7.5"
+  - "7.4"
+  - "7.3"
+defaultVersion: "7.5"
+
+# Service definitions
+services:
+  - name: kafka
+    type: worker
+    image: "confluentinc/cp-kafka:${VERSION}.0"
+    ports:
+      - port: 9092
+      - port: 9093
+    env:
+      - key: KAFKA_BROKER_ID
+        default: "1"
+        configurable: true
+        description: Unique broker ID
+      - key: KAFKA_ZOOKEEPER_CONNECT
+        configurable: true
+        description: Zookeeper connection string (zookeeper:2181)
+      - key: KAFKA_ADVERTISED_LISTENERS
+        configurable: true
+        description: Advertised listeners (PLAINTEXT://kafka:9092)
+      - key: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+        default: "PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT"
+        configurable: true
+        description: Listener security protocol mapping
+      - key: KAFKA_INTER_BROKER_LISTENER_NAME
+        default: "INTERNAL"
+        configurable: true
+        description: Inter-broker listener name
+      - key: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+        default: "1"
+        configurable: true
+        description: Replication factor for offsets topic
+      - key: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+        default: "1"
+        configurable: true
+        description: Minimum ISR for transaction state log
+      - key: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+        default: "1"
+        configurable: true
+        description: Replication factor for transaction state log
+      - key: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+        default: "true"
+        configurable: true
+        description: Enable auto topic creation
+      - key: KAFKA_LOG_RETENTION_HOURS
+        default: "168"
+        configurable: true
+        description: Log retention in hours (default 7 days)
+    volumes:
+      - name: kafka-data
+        path: /var/lib/kafka/data
+        size: 51200
+    health_check:
+      type: exec
+      command: ["kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 500
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 9092
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

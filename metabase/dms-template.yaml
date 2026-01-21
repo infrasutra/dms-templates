@@ -1,0 +1,76 @@
+version: "1"
+
+# Template metadata
+name: metabase
+description: Metabase is an open-source business intelligence tool that lets anyone in your organization ask questions and learn from data with beautiful dashboards.
+icon: https://raw.githubusercontent.com/metabase/metabase/master/frontend/src/metabase/static-viz/icon.svg
+category: analytics
+tags:
+  - analytics
+  - business-intelligence
+  - dashboards
+  - data-visualization
+  - sql
+
+# Supported versions
+versions:
+  - "v0.48.0"
+  - "v0.47.0"
+  - "v0.46.0"
+defaultVersion: "v0.48.0"
+
+# Service definitions
+services:
+  - name: metabase
+    type: web
+    image: "metabase/metabase:${VERSION}"
+    ports:
+      - port: 3000
+    env:
+      - key: MB_DB_TYPE
+        value: postgres
+        description: Application database type
+      - key: MB_DB_HOST
+        configurable: true
+        description: PostgreSQL host
+      - key: MB_DB_PORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: MB_DB_DBNAME
+        default: metabase
+        configurable: true
+        description: Database name
+      - key: MB_DB_USER
+        default: metabase
+        configurable: true
+        description: Database username
+      - key: MB_DB_PASS
+        generator: password
+        description: Database password
+      - key: MB_ENCRYPTION_SECRET_KEY
+        generator: password
+        description: Encryption key for sensitive data
+    volumes:
+      - name: metabase-data
+        path: /metabase-data
+        size: 5120
+    health_check:
+      type: http
+      path: /api/health
+      port: 3000
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 500
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 3000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

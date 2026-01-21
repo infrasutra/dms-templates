@@ -1,0 +1,87 @@
+version: "1"
+
+# Template metadata
+name: strapi
+description: Strapi is the leading open-source headless CMS, providing a customizable API and an intuitive admin panel for managing content.
+icon: https://raw.githubusercontent.com/strapi/strapi/main/packages/strapi-design-system/assets/logo.svg
+category: cms
+tags:
+  - cms
+  - headless-cms
+  - api
+  - content-management
+  - node
+
+# Supported versions
+versions:
+  - "4"
+  - "3.6"
+defaultVersion: "4"
+
+# Service definitions
+services:
+  - name: strapi
+    type: web
+    image: "strapi/strapi:${VERSION}"
+    ports:
+      - port: 1337
+    env:
+      - key: DATABASE_CLIENT
+        value: postgres
+        description: Database client type
+      - key: DATABASE_HOST
+        configurable: true
+        description: PostgreSQL host
+      - key: DATABASE_PORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: DATABASE_NAME
+        default: strapi
+        configurable: true
+        description: Database name
+      - key: DATABASE_USERNAME
+        default: strapi
+        configurable: true
+        description: Database username
+      - key: DATABASE_PASSWORD
+        generator: password
+        description: Database password
+      - key: APP_KEYS
+        generator: password
+        description: Session keys (comma-separated)
+      - key: API_TOKEN_SALT
+        generator: password
+        description: Salt for API tokens
+      - key: ADMIN_JWT_SECRET
+        generator: password
+        description: JWT secret for admin panel
+      - key: TRANSFER_TOKEN_SALT
+        generator: password
+        description: Salt for transfer tokens
+      - key: JWT_SECRET
+        generator: password
+        description: JWT secret for authentication
+    volumes:
+      - name: strapi-data
+        path: /srv/app
+        size: 10240
+    health_check:
+      type: http
+      path: /_health
+      port: 1337
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 300
+    memory: 1024
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 1337
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

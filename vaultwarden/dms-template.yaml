@@ -1,0 +1,65 @@
+version: "1"
+
+# Template metadata
+name: vaultwarden
+description: Vaultwarden is a lightweight, self-hosted Bitwarden-compatible password manager server written in Rust.
+icon: https://raw.githubusercontent.com/dani-garcia/vaultwarden/main/resources/vaultwarden-icon.svg
+category: security
+tags:
+  - security
+  - password-manager
+  - bitwarden
+  - encryption
+
+# Supported versions
+versions:
+  - "1.30.5"
+  - "1.30"
+  - "latest"
+defaultVersion: "1.30.5"
+
+# Service definitions
+services:
+  - name: vaultwarden
+    type: web
+    image: "vaultwarden/server:${VERSION}"
+    ports:
+      - port: 80
+    env:
+      - key: ADMIN_TOKEN
+        generator: password
+        description: Admin panel access token
+      - key: DOMAIN
+        default: "http://localhost"
+        configurable: true
+        description: Domain URL for the Vaultwarden instance
+      - key: SIGNUPS_ALLOWED
+        default: "true"
+        configurable: true
+        description: Allow new user registrations
+      - key: WEBSOCKET_ENABLED
+        value: "true"
+        description: Enable WebSocket notifications
+    volumes:
+      - name: vaultwarden-data
+        path: /data
+        size: 1024
+    health_check:
+      type: http
+      path: /alive
+      port: 80
+      initial_delay: 10
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 80
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

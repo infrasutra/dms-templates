@@ -1,0 +1,76 @@
+version: "1"
+
+# Template metadata
+name: mattermost
+description: Mattermost is an open-source, self-hosted team collaboration platform offering messaging, file sharing, and integrations as a Slack alternative.
+icon: https://raw.githubusercontent.com/mattermost/mattermost-webapp/master/images/icon.png
+category: communication
+tags:
+  - communication
+  - chat
+  - team-collaboration
+  - slack-alternative
+  - messaging
+
+# Supported versions
+versions:
+  - "9.5"
+  - "9.4"
+  - "9.3"
+defaultVersion: "9.5"
+
+# Service definitions
+services:
+  - name: mattermost
+    type: web
+    image: "mattermost/mattermost-team-edition:${VERSION}"
+    ports:
+      - port: 8065
+    env:
+      - key: MM_SQLSETTINGS_DRIVERNAME
+        value: postgres
+        description: Database driver
+      - key: MM_SQLSETTINGS_DATASOURCE
+        configurable: true
+        description: PostgreSQL connection string (postgres://user:pass@host:port/dbname?sslmode=disable)
+      - key: MM_SERVICESETTINGS_SITEURL
+        default: "http://localhost:8065"
+        configurable: true
+        description: Public URL of the Mattermost server
+      - key: MM_SERVICESETTINGS_ENABLESECURITYFIXALERT
+        default: "true"
+        configurable: true
+        description: Enable security fix alerts
+      - key: MM_TEAMSETTINGS_MAXUSERSPERTEAM
+        default: "50"
+        configurable: true
+        description: Maximum users per team
+    volumes:
+      - name: mattermost-data
+        path: /mattermost/data
+        size: 10240
+      - name: mattermost-logs
+        path: /mattermost/logs
+        size: 2048
+      - name: mattermost-config
+        path: /mattermost/config
+        size: 128
+    health_check:
+      type: http
+      path: /api/v4/system/ping
+      port: 8065
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8065
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

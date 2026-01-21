@@ -1,0 +1,130 @@
+version: "1"
+
+# Template metadata
+name: harbor
+description: Harbor is an open-source container registry with security scanning, RBAC, replication, and artifact signing for storing and distributing Docker images.
+icon: https://raw.githubusercontent.com/goharbor/harbor/main/src/portal/src/images/harbor-logo.svg
+category: devops
+tags:
+  - devops
+  - container-registry
+  - docker
+  - security
+  - artifacts
+
+# Supported versions
+versions:
+  - "v2.10"
+  - "v2.9"
+  - "v2.8"
+defaultVersion: "v2.10"
+
+# Service definitions
+services:
+  - name: harbor-core
+    type: web
+    image: "goharbor/harbor-core:${VERSION}.0"
+    ports:
+      - port: 8080
+    env:
+      - key: CORE_SECRET
+        generator: password
+        description: Core service secret
+      - key: HARBOR_ADMIN_PASSWORD
+        generator: password
+        description: Harbor admin password
+      - key: DATABASE_TYPE
+        value: postgresql
+        description: Database type
+      - key: POSTGRESQL_HOST
+        configurable: true
+        description: PostgreSQL host
+      - key: POSTGRESQL_PORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: POSTGRESQL_DATABASE
+        default: harbor
+        configurable: true
+        description: Database name
+      - key: POSTGRESQL_USERNAME
+        default: harbor
+        configurable: true
+        description: Database username
+      - key: POSTGRESQL_PASSWORD
+        generator: password
+        description: Database password
+      - key: REGISTRY_URL
+        default: "http://registry:5000"
+        configurable: true
+        description: Registry URL
+      - key: EXT_ENDPOINT
+        default: "http://localhost"
+        configurable: true
+        description: External endpoint URL
+    volumes:
+      - name: harbor-data
+        path: /data
+        size: 51200
+    health_check:
+      type: http
+      path: /api/v2.0/health
+      port: 8080
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 300
+    memory: 1024
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8080
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system
+
+  - name: harbor-registry
+    type: worker
+    image: "goharbor/registry-photon:${VERSION}.0"
+    ports:
+      - port: 5000
+    env:
+      - key: REGISTRY_HTTP_SECRET
+        generator: password
+        description: Registry HTTP secret
+      - key: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
+        default: "/storage"
+        description: Registry storage path
+    volumes:
+      - name: harbor-registry
+        path: /storage
+        size: 51200
+    health_check:
+      type: http
+      path: /
+      port: 5000
+      initial_delay: 10
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+
+  - name: harbor-portal
+    type: web
+    image: "goharbor/harbor-portal:${VERSION}.0"
+    ports:
+      - port: 8080
+    health_check:
+      type: http
+      path: /
+      port: 8080
+      initial_delay: 10
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 100
+    memory: 256

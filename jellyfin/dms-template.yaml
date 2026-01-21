@@ -1,0 +1,62 @@
+version: "1"
+
+# Template metadata
+name: jellyfin
+description: Jellyfin is a free, open-source media server for streaming movies, TV shows, music, and live TV to any device.
+icon: https://raw.githubusercontent.com/jellyfin/jellyfin-ux/master/branding/SVG/icon-transparent.svg
+category: media
+tags:
+  - media
+  - streaming
+  - video
+  - music
+  - entertainment
+
+# Supported versions
+versions:
+  - "10.9"
+  - "10.8"
+  - "latest"
+defaultVersion: "10.9"
+
+# Service definitions
+services:
+  - name: jellyfin
+    type: web
+    image: "jellyfin/jellyfin:${VERSION}"
+    ports:
+      - port: 8096
+    env:
+      - key: JELLYFIN_PublishedServerUrl
+        default: "http://localhost:8096"
+        configurable: true
+        description: Public URL of the Jellyfin server
+    volumes:
+      - name: jellyfin-config
+        path: /config
+        size: 5120
+      - name: jellyfin-media
+        path: /media
+        size: 102400
+      - name: jellyfin-cache
+        path: /cache
+        size: 10240
+    health_check:
+      type: http
+      path: /health
+      port: 8096
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 500
+    memory: 1024
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8096
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

@@ -1,0 +1,58 @@
+version: "1"
+
+# Template metadata
+name: nocodb
+description: NocoDB is an open-source Airtable alternative that turns any database into a smart spreadsheet with a beautiful no-code interface.
+icon: https://raw.githubusercontent.com/nocodb/nocodb/develop/packages/nc-gui/assets/img/brand/nocodb-logo.svg
+category: lowcode
+tags:
+  - lowcode
+  - no-code
+  - database
+  - spreadsheet
+  - airtable-alternative
+
+# Supported versions
+versions:
+  - "0.204"
+  - "0.203"
+  - "latest"
+defaultVersion: "0.204"
+
+# Service definitions
+services:
+  - name: nocodb
+    type: web
+    image: "nocodb/nocodb:${VERSION}"
+    ports:
+      - port: 8080
+    env:
+      - key: NC_AUTH_JWT_SECRET
+        generator: password
+        description: JWT secret for authentication
+      - key: NC_DB
+        configurable: true
+        description: Database connection string (e.g., pg://host:port?u=user&p=password&d=database)
+    volumes:
+      - name: nocodb-data
+        path: /usr/app/data
+        size: 10240
+    health_check:
+      type: http
+      path: /api/v1/health
+      port: 8080
+      initial_delay: 15
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8080
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

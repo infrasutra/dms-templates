@@ -1,0 +1,143 @@
+version: "1"
+
+# Template metadata
+name: immich
+description: Immich is a self-hosted photo and video backup solution with powerful AI features for face recognition, object detection, and smart search.
+icon: https://raw.githubusercontent.com/immich-app/immich/main/docs/static/img/logo.svg
+category: media
+tags:
+  - media
+  - photos
+  - backup
+  - ai
+  - google-photos-alternative
+
+# Supported versions
+versions:
+  - "v1.94.0"
+  - "v1.93.0"
+  - "release"
+defaultVersion: "v1.94.0"
+
+# Service definitions
+services:
+  - name: immich-server
+    type: web
+    image: "ghcr.io/immich-app/immich-server:${VERSION}"
+    ports:
+      - port: 3001
+    env:
+      - key: DB_HOSTNAME
+        configurable: true
+        description: PostgreSQL host
+      - key: DB_PORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: DB_DATABASE_NAME
+        default: immich
+        configurable: true
+        description: Database name
+      - key: DB_USERNAME
+        default: immich
+        configurable: true
+        description: Database username
+      - key: DB_PASSWORD
+        generator: password
+        description: Database password
+      - key: REDIS_HOSTNAME
+        configurable: true
+        description: Redis host
+      - key: REDIS_PORT
+        default: "6379"
+        configurable: true
+        description: Redis port
+      - key: JWT_SECRET
+        generator: password
+        description: JWT signing secret
+      - key: UPLOAD_LOCATION
+        default: "/usr/src/app/upload"
+        configurable: true
+        description: Upload directory path
+    volumes:
+      - name: immich-upload
+        path: /usr/src/app/upload
+        size: 102400
+    health_check:
+      type: http
+      path: /api/server-info/ping
+      port: 3001
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 500
+    memory: 1024
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 3001
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system
+
+  - name: immich-microservices
+    type: worker
+    image: "ghcr.io/immich-app/immich-server:${VERSION}"
+    command:
+      - start.sh
+      - microservices
+    env:
+      - key: DB_HOSTNAME
+        configurable: true
+        description: PostgreSQL host
+      - key: DB_PORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: DB_DATABASE_NAME
+        default: immich
+        configurable: true
+        description: Database name
+      - key: DB_USERNAME
+        default: immich
+        configurable: true
+        description: Database username
+      - key: DB_PASSWORD
+        generator: password
+        description: Database password
+      - key: REDIS_HOSTNAME
+        configurable: true
+        description: Redis host
+    volumes:
+      - name: immich-upload
+        path: /usr/src/app/upload
+        size: 102400
+    cpu: 500
+    memory: 1024
+
+  - name: immich-machine-learning
+    type: worker
+    image: "ghcr.io/immich-app/immich-machine-learning:${VERSION}"
+    ports:
+      - port: 3003
+    env:
+      - key: TRANSFORMERS_CACHE
+        default: "/cache"
+        description: Cache directory for ML models
+    volumes:
+      - name: immich-ml-cache
+        path: /cache
+        size: 10240
+    health_check:
+      type: http
+      path: /ping
+      port: 3003
+      initial_delay: 60
+      interval: 60
+      timeout: 10
+      retries: 3
+    cpu: 1000
+    memory: 2048

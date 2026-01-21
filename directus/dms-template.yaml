@@ -1,0 +1,89 @@
+version: "1"
+
+# Template metadata
+name: directus
+description: Directus is an instant REST and GraphQL API for any SQL database, with an intuitive admin interface for managing content and users.
+icon: https://raw.githubusercontent.com/directus/directus/main/packages/app/src/assets/logo.svg
+category: cms
+tags:
+  - cms
+  - headless-cms
+  - api
+  - database
+  - admin-panel
+
+# Supported versions
+versions:
+  - "10"
+  - "9.26"
+defaultVersion: "10"
+
+# Service definitions
+services:
+  - name: directus
+    type: web
+    image: "directus/directus:${VERSION}"
+    ports:
+      - port: 8055
+    env:
+      - key: KEY
+        generator: password
+        description: Unique identifier for the project
+      - key: SECRET
+        generator: password
+        description: Secret string for signing tokens
+      - key: DB_CLIENT
+        value: pg
+        description: Database client
+      - key: DB_HOST
+        configurable: true
+        description: PostgreSQL host
+      - key: DB_PORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: DB_DATABASE
+        default: directus
+        configurable: true
+        description: Database name
+      - key: DB_USER
+        default: directus
+        configurable: true
+        description: Database username
+      - key: DB_PASSWORD
+        generator: password
+        description: Database password
+      - key: ADMIN_EMAIL
+        default: "admin@example.com"
+        configurable: true
+        description: Admin user email
+      - key: ADMIN_PASSWORD
+        generator: password
+        description: Admin user password
+      - key: PUBLIC_URL
+        default: "http://localhost:8055"
+        configurable: true
+        description: Public URL of the Directus instance
+    volumes:
+      - name: directus-uploads
+        path: /directus/uploads
+        size: 10240
+    health_check:
+      type: http
+      path: /server/health
+      port: 8055
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8055
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

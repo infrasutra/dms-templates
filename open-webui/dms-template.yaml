@@ -1,0 +1,61 @@
+version: "1"
+
+# Template metadata
+name: open-webui
+description: Open WebUI is a user-friendly web interface for interacting with LLMs, supporting Ollama and OpenAI-compatible APIs with chat history and model management.
+icon: https://raw.githubusercontent.com/open-webui/open-webui/main/static/favicon.png
+category: ai
+tags:
+  - ai
+  - llm
+  - chat-interface
+  - ollama-ui
+
+# Supported versions
+versions:
+  - "main"
+  - "latest"
+defaultVersion: "main"
+
+# Service definitions
+services:
+  - name: open-webui
+    type: web
+    image: "ghcr.io/open-webui/open-webui:${VERSION}"
+    ports:
+      - port: 8080
+    env:
+      - key: OLLAMA_BASE_URL
+        default: "http://ollama:11434"
+        configurable: true
+        description: URL of the Ollama API server
+      - key: WEBUI_SECRET_KEY
+        generator: password
+        description: Secret key for session encryption
+      - key: ENABLE_SIGNUP
+        default: "true"
+        configurable: true
+        description: Allow new user registrations
+    volumes:
+      - name: open-webui-data
+        path: /app/backend/data
+        size: 5120
+    health_check:
+      type: http
+      path: /health
+      port: 8080
+      initial_delay: 15
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8080
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

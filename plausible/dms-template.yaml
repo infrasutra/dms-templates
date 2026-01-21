@@ -1,0 +1,72 @@
+version: "1"
+
+# Template metadata
+name: plausible
+description: Plausible Analytics is a lightweight, privacy-friendly web analytics tool that doesn't use cookies and is fully GDPR compliant.
+icon: https://raw.githubusercontent.com/plausible/analytics/master/assets/static/images/icon/plausible_logo.svg
+category: analytics
+tags:
+  - analytics
+  - web-analytics
+  - privacy
+  - gdpr
+  - google-analytics-alternative
+
+# Supported versions
+versions:
+  - "v2"
+  - "v1.5"
+defaultVersion: "v2"
+
+# Service definitions
+services:
+  - name: plausible
+    type: web
+    image: "plausible/analytics:${VERSION}"
+    ports:
+      - port: 8000
+    env:
+      - key: BASE_URL
+        default: "http://localhost:8000"
+        configurable: true
+        description: Public URL of the Plausible instance
+      - key: SECRET_KEY_BASE
+        generator: password
+        description: Secret key for signing (min 64 chars)
+      - key: DATABASE_URL
+        configurable: true
+        description: PostgreSQL connection string
+      - key: CLICKHOUSE_DATABASE_URL
+        configurable: true
+        description: ClickHouse connection string
+      - key: DISABLE_REGISTRATION
+        default: "false"
+        configurable: true
+        description: Disable new user registration
+      - key: MAILER_EMAIL
+        default: "hello@plausible.local"
+        configurable: true
+        description: From address for emails
+    volumes:
+      - name: plausible-data
+        path: /var/lib/plausible
+        size: 5120
+    health_check:
+      type: http
+      path: /api/health
+      port: 8000
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

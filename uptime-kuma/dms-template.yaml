@@ -1,0 +1,53 @@
+version: "1"
+
+# Template metadata
+name: uptime-kuma
+description: Uptime Kuma is a self-hosted monitoring tool for tracking the uptime of websites, services, and network endpoints with beautiful status pages.
+icon: https://raw.githubusercontent.com/louislam/uptime-kuma/master/public/icon.png
+category: monitoring
+tags:
+  - monitoring
+  - uptime
+  - status-page
+  - alerting
+
+# Supported versions
+versions:
+  - "1"
+  - "1.23.11"
+defaultVersion: "1"
+
+# Service definitions
+services:
+  - name: uptime-kuma
+    type: web
+    image: "louislam/uptime-kuma:${VERSION}"
+    ports:
+      - port: 3001
+    env:
+      - key: UPTIME_KUMA_PORT
+        value: "3001"
+        description: Port for Uptime Kuma to listen on
+    volumes:
+      - name: uptime-kuma-data
+        path: /app/data
+        size: 1024
+    health_check:
+      type: http
+      path: /
+      port: 3001
+      initial_delay: 10
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 3001
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

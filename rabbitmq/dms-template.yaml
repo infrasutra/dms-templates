@@ -1,0 +1,66 @@
+version: "1"
+
+# Template metadata
+name: rabbitmq
+description: RabbitMQ is the most widely deployed open-source message broker supporting multiple messaging protocols including AMQP, MQTT, and STOMP.
+icon: https://raw.githubusercontent.com/docker-library/docs/master/rabbitmq/logo.png
+category: messaging
+tags:
+  - messaging
+  - message-broker
+  - amqp
+  - queue
+  - pub-sub
+
+# Supported versions
+versions:
+  - "3.13-management"
+  - "3.12-management"
+  - "3.11-management"
+defaultVersion: "3.13-management"
+
+# Service definitions
+services:
+  - name: rabbitmq
+    type: worker
+    image: "rabbitmq:${VERSION}"
+    ports:
+      - port: 5672
+      - port: 15672
+    env:
+      - key: RABBITMQ_DEFAULT_USER
+        default: admin
+        configurable: true
+        description: Default admin username
+      - key: RABBITMQ_DEFAULT_PASS
+        generator: password
+        description: Default admin password
+      - key: RABBITMQ_DEFAULT_VHOST
+        default: /
+        configurable: true
+        description: Default virtual host
+      - key: RABBITMQ_ERLANG_COOKIE
+        generator: password
+        description: Erlang cookie for clustering
+    volumes:
+      - name: rabbitmq-data
+        path: /var/lib/rabbitmq
+        size: 10240
+    health_check:
+      type: exec
+      command: ["rabbitmq-diagnostics", "-q", "ping"]
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 5672
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system
