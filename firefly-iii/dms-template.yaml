@@ -1,0 +1,99 @@
+version: "1"
+
+# Template metadata
+name: firefly-iii
+description: Firefly III is a free and open-source personal finance manager that helps you track expenses, budgets, and financial goals with powerful reporting and automation.
+icon: https://raw.githubusercontent.com/firefly-iii/firefly-iii/main/public/favicon.ico
+category: finance
+tags:
+  - finance
+  - budget
+  - expenses
+  - accounting
+  - self-hosted
+
+# Supported versions
+versions:
+  - "version-6.1"
+  - "version-6.0"
+  - "latest"
+defaultVersion: "version-6.1"
+
+# Service definitions
+services:
+  - name: firefly-iii
+    type: web
+    image: "fireflyiii/core:${VERSION}"
+    ports:
+      - port: 8080
+    env:
+      - key: APP_KEY
+        generator: password
+        description: Application encryption key (32 characters)
+      - key: APP_URL
+        default: "http://localhost"
+        configurable: true
+        description: Full URL to Firefly III
+      - key: TRUSTED_PROXIES
+        default: "**"
+        configurable: true
+        description: Trusted proxy configuration
+      - key: DB_CONNECTION
+        value: "pgsql"
+        description: Database connection type
+      - key: DB_HOST
+        configurable: true
+        description: PostgreSQL host
+      - key: DB_PORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: DB_DATABASE
+        default: "firefly"
+        configurable: true
+        description: Database name
+      - key: DB_USERNAME
+        default: "firefly"
+        configurable: true
+        description: Database username
+      - key: DB_PASSWORD
+        generator: password
+        description: Database password
+      - key: MAIL_MAILER
+        default: "log"
+        configurable: true
+        description: Mail driver (smtp, log, sendmail)
+      - key: MAIL_HOST
+        configurable: true
+        description: SMTP host
+      - key: MAIL_PORT
+        default: "587"
+        configurable: true
+        description: SMTP port
+      - key: TZ
+        default: "UTC"
+        configurable: true
+        description: Timezone
+    volumes:
+      - name: firefly-upload
+        path: /var/www/html/storage/upload
+        size: 5120
+    health_check:
+      type: http
+      path: /health
+      port: 8080
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8080
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

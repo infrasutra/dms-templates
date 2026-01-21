@@ -1,0 +1,81 @@
+version: "1"
+
+# Template metadata
+name: linkwarden
+description: Linkwarden is a self-hosted bookmark manager to collect, organize, and preserve webpages with automatic archiving, tagging, and collaboration features.
+icon: https://raw.githubusercontent.com/linkwarden/linkwarden/main/public/logo.png
+category: bookmarks
+tags:
+  - bookmarks
+  - links
+  - archive
+  - organization
+  - collaboration
+
+# Supported versions
+versions:
+  - "v2.5"
+  - "v2.4"
+  - "latest"
+defaultVersion: "v2.5"
+
+# Service definitions
+services:
+  - name: linkwarden
+    type: web
+    image: "ghcr.io/linkwarden/linkwarden:${VERSION}"
+    ports:
+      - port: 3000
+    env:
+      - key: NEXTAUTH_SECRET
+        generator: password
+        description: Secret for NextAuth.js
+      - key: NEXTAUTH_URL
+        default: "http://localhost:3000"
+        configurable: true
+        description: Full URL to Linkwarden
+      - key: DATABASE_URL
+        configurable: true
+        description: PostgreSQL connection URL (e.g., postgresql://user:pass@host:5432/db)
+      - key: NEXT_PUBLIC_DISABLE_REGISTRATION
+        default: "false"
+        configurable: true
+        description: Disable new user registration
+      - key: NEXT_PUBLIC_CREDENTIALS_ENABLED
+        default: "true"
+        configurable: true
+        description: Enable username/password login
+      - key: PAGINATION_TAKE_COUNT
+        default: "20"
+        configurable: true
+        description: Number of items per page
+      - key: STORAGE_FOLDER
+        value: "data"
+        description: Storage folder name
+      - key: AUTOSCROLL_TIMEOUT
+        default: "30"
+        configurable: true
+        description: Auto-scroll timeout in seconds
+    volumes:
+      - name: linkwarden-data
+        path: /data/data
+        size: 10240
+    health_check:
+      type: http
+      path: /
+      port: 3000
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 3000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

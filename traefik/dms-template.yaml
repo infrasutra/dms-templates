@@ -1,0 +1,76 @@
+version: "1"
+
+# Template metadata
+name: traefik
+description: Traefik is a modern cloud-native reverse proxy and load balancer that makes deploying microservices easy with automatic service discovery and Let's Encrypt integration.
+icon: https://raw.githubusercontent.com/traefik/traefik/master/docs/content/assets/img/traefik.logo.png
+category: proxy
+tags:
+  - proxy
+  - reverse-proxy
+  - load-balancer
+  - ingress
+  - kubernetes
+
+# Supported versions
+versions:
+  - "v3.0"
+  - "v2.11"
+  - "v2.10"
+defaultVersion: "v3.0"
+
+# Service definitions
+services:
+  - name: traefik
+    type: web
+    image: "traefik:${VERSION}"
+    ports:
+      - port: 80
+      - port: 443
+      - port: 8080
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--ping=true"
+    env:
+      - key: TZ
+        default: "UTC"
+        configurable: true
+        description: Timezone
+      - key: TRAEFIK_LOG_LEVEL
+        default: "INFO"
+        configurable: true
+        description: Log level (DEBUG, INFO, WARN, ERROR)
+      - key: TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL
+        configurable: true
+        description: Email for Let's Encrypt certificates
+    volumes:
+      - name: traefik-letsencrypt
+        path: /letsencrypt
+        size: 128
+      - name: traefik-config
+        path: /etc/traefik
+        size: 128
+    health_check:
+      type: http
+      path: /ping
+      port: 8080
+      initial_delay: 10
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8080
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

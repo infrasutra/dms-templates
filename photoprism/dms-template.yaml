@@ -1,0 +1,100 @@
+version: "1"
+
+# Template metadata
+name: photoprism
+description: PhotoPrism is an AI-powered photo management application for browsing, organizing, and sharing your photo collection with automatic tagging and face recognition.
+icon: https://raw.githubusercontent.com/photoprism/photoprism/develop/assets/static/icons/logo.svg
+category: media
+tags:
+  - photos
+  - media
+  - gallery
+  - ai
+  - face-recognition
+
+# Supported versions
+versions:
+  - "240128"
+  - "231128"
+  - "latest"
+defaultVersion: "240128"
+
+# Service definitions
+services:
+  - name: photoprism
+    type: web
+    image: "photoprism/photoprism:${VERSION}"
+    ports:
+      - port: 2342
+    env:
+      - key: PHOTOPRISM_ADMIN_USER
+        default: "admin"
+        configurable: true
+        description: Admin username
+      - key: PHOTOPRISM_ADMIN_PASSWORD
+        generator: password
+        description: Admin password
+      - key: PHOTOPRISM_AUTH_MODE
+        default: "password"
+        configurable: true
+        description: Authentication mode (public, password)
+      - key: PHOTOPRISM_SITE_URL
+        default: "http://localhost:2342/"
+        configurable: true
+        description: Public site URL
+      - key: PHOTOPRISM_ORIGINALS_LIMIT
+        default: "5000"
+        configurable: true
+        description: Maximum file size in MB
+      - key: PHOTOPRISM_DATABASE_DRIVER
+        default: "sqlite"
+        configurable: true
+        description: Database driver (sqlite, mysql, mariadb)
+      - key: PHOTOPRISM_DATABASE_SERVER
+        configurable: true
+        description: Database server (for mysql/mariadb)
+      - key: PHOTOPRISM_DATABASE_NAME
+        default: "photoprism"
+        configurable: true
+        description: Database name
+      - key: PHOTOPRISM_DATABASE_USER
+        default: "photoprism"
+        configurable: true
+        description: Database username
+      - key: PHOTOPRISM_DATABASE_PASSWORD
+        generator: password
+        description: Database password
+      - key: PHOTOPRISM_DETECT_NSFW
+        default: "false"
+        configurable: true
+        description: Enable NSFW detection
+      - key: PHOTOPRISM_UPLOAD_NSFW
+        default: "true"
+        configurable: true
+        description: Allow NSFW uploads
+    volumes:
+      - name: photoprism-storage
+        path: /photoprism/storage
+        size: 10240
+      - name: photoprism-originals
+        path: /photoprism/originals
+        size: 102400
+    health_check:
+      type: http
+      path: /api/v1/status
+      port: 2342
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 500
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 2342
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

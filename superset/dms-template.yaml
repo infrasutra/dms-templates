@@ -1,0 +1,106 @@
+version: "1"
+
+# Template metadata
+name: superset
+description: Apache Superset is a modern data exploration and visualization platform, offering a rich set of charts, SQL editor, and semantic layer for business intelligence.
+icon: https://raw.githubusercontent.com/apache/superset/master/superset-frontend/src/assets/images/superset-logo-horiz.svg
+category: analytics
+tags:
+  - analytics
+  - visualization
+  - dashboards
+  - business-intelligence
+  - data-exploration
+
+# Supported versions
+versions:
+  - "3.1.0"
+  - "3.0.0"
+  - "latest"
+defaultVersion: "3.1.0"
+
+# Service definitions
+services:
+  - name: superset
+    type: web
+    image: "apache/superset:${VERSION}"
+    ports:
+      - port: 8088
+    env:
+      - key: SUPERSET_SECRET_KEY
+        generator: password
+        description: Secret key for session signing
+      - key: DATABASE_DB
+        default: "superset"
+        configurable: true
+        description: PostgreSQL database name
+      - key: DATABASE_HOST
+        configurable: true
+        description: PostgreSQL host
+      - key: DATABASE_PORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: DATABASE_USER
+        default: "superset"
+        configurable: true
+        description: PostgreSQL username
+      - key: DATABASE_PASSWORD
+        generator: password
+        description: PostgreSQL password
+      - key: REDIS_HOST
+        configurable: true
+        description: Redis host
+      - key: REDIS_PORT
+        default: "6379"
+        configurable: true
+        description: Redis port
+      - key: REDIS_PASSWORD
+        generator: password
+        description: Redis password
+      - key: SUPERSET_LOAD_EXAMPLES
+        default: "no"
+        configurable: true
+        description: Load example dashboards
+      - key: ADMIN_USERNAME
+        default: "admin"
+        configurable: true
+        description: Initial admin username
+      - key: ADMIN_EMAIL
+        default: "admin@superset.local"
+        configurable: true
+        description: Initial admin email
+      - key: ADMIN_PASSWORD
+        generator: password
+        description: Initial admin password
+      - key: ADMIN_FIRSTNAME
+        default: "Superset"
+        configurable: true
+        description: Admin first name
+      - key: ADMIN_LASTNAME
+        default: "Admin"
+        configurable: true
+        description: Admin last name
+    volumes:
+      - name: superset-home
+        path: /app/superset_home
+        size: 5120
+    health_check:
+      type: http
+      path: /health
+      port: 8088
+      initial_delay: 120
+      interval: 60
+      timeout: 30
+      retries: 10
+    cpu: 500
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8088
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

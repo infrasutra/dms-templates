@@ -1,0 +1,98 @@
+version: "1"
+
+# Template metadata
+name: jitsi-meet
+description: Jitsi Meet is a free, open-source video conferencing solution with no account required, offering high-quality video calls, screen sharing, and chat.
+icon: https://raw.githubusercontent.com/jitsi/jitsi-meet/master/images/osx-icon.png
+category: communication
+tags:
+  - video-conferencing
+  - meetings
+  - webrtc
+  - collaboration
+  - communication
+
+# Supported versions
+versions:
+  - "stable-9111"
+  - "stable-9078"
+  - "stable"
+defaultVersion: "stable-9111"
+
+# Service definitions
+services:
+  - name: jitsi-web
+    type: web
+    image: "jitsi/web:${VERSION}"
+    ports:
+      - port: 80
+      - port: 443
+    env:
+      - key: PUBLIC_URL
+        configurable: true
+        description: Public URL for Jitsi Meet
+      - key: TZ
+        default: "UTC"
+        configurable: true
+        description: Timezone
+      - key: ENABLE_AUTH
+        default: "0"
+        configurable: true
+        description: Enable authentication (0 or 1)
+      - key: ENABLE_GUESTS
+        default: "1"
+        configurable: true
+        description: Allow guests when auth enabled (0 or 1)
+      - key: ENABLE_TRANSCRIPTIONS
+        default: "0"
+        configurable: true
+        description: Enable transcriptions (0 or 1)
+      - key: ENABLE_RECORDING
+        default: "0"
+        configurable: true
+        description: Enable recording (0 or 1)
+      - key: ENABLE_LIVESTREAMING
+        default: "0"
+        configurable: true
+        description: Enable live streaming (0 or 1)
+      - key: JICOFO_AUTH_PASSWORD
+        generator: password
+        description: Jicofo auth password
+      - key: JVB_AUTH_PASSWORD
+        generator: password
+        description: JVB auth password
+      - key: JIGASI_XMPP_PASSWORD
+        generator: password
+        description: Jigasi XMPP password
+      - key: JIBRI_RECORDER_PASSWORD
+        generator: password
+        description: Jibri recorder password
+      - key: JIBRI_XMPP_PASSWORD
+        generator: password
+        description: Jibri XMPP password
+    volumes:
+      - name: jitsi-web-config
+        path: /config
+        size: 256
+      - name: jitsi-web-transcripts
+        path: /usr/share/jitsi-meet/transcripts
+        size: 1024
+    health_check:
+      type: http
+      path: /
+      port: 80
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 500
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 80
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

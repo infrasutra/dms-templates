@@ -1,0 +1,63 @@
+version: "1"
+
+# Template metadata
+name: dashy
+description: Dashy is a self-hostable personal dashboard featuring status-checking, widgets, themes, and an easy YAML-based configuration system.
+icon: https://raw.githubusercontent.com/Lissy93/dashy/master/public/img/dashy.png
+category: dashboard
+tags:
+  - dashboard
+  - homepage
+  - self-hosted
+  - widgets
+  - status
+
+# Supported versions
+versions:
+  - "3.1.0"
+  - "3.0.0"
+  - "latest"
+defaultVersion: "3.1.0"
+
+# Service definitions
+services:
+  - name: dashy
+    type: web
+    image: "lissy93/dashy:${VERSION}"
+    ports:
+      - port: 8080
+    env:
+      - key: NODE_ENV
+        value: "production"
+        description: Node environment
+      - key: UID
+        default: "1000"
+        configurable: true
+        description: User ID for file permissions
+      - key: GID
+        default: "1000"
+        configurable: true
+        description: Group ID for file permissions
+    volumes:
+      - name: dashy-config
+        path: /app/user-data
+        size: 128
+    health_check:
+      type: http
+      path: /
+      port: 8080
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8080
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

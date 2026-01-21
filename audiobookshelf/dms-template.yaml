@@ -1,0 +1,73 @@
+version: "1"
+
+# Template metadata
+name: audiobookshelf
+description: Audiobookshelf is a self-hosted audiobook and podcast server with a rich web UI, mobile apps, and support for syncing progress across devices.
+icon: https://raw.githubusercontent.com/advplyr/audiobookshelf/master/client/static/Logo.png
+category: media
+tags:
+  - audiobooks
+  - podcasts
+  - media
+  - streaming
+  - audio
+
+# Supported versions
+versions:
+  - "2.8.0"
+  - "2.7.0"
+  - "latest"
+defaultVersion: "2.8.0"
+
+# Service definitions
+services:
+  - name: audiobookshelf
+    type: web
+    image: "ghcr.io/advplyr/audiobookshelf:${VERSION}"
+    ports:
+      - port: 80
+    env:
+      - key: TZ
+        default: "UTC"
+        configurable: true
+        description: Timezone
+      - key: AUDIOBOOKSHELF_UID
+        default: "99"
+        configurable: true
+        description: User ID for file permissions
+      - key: AUDIOBOOKSHELF_GID
+        default: "100"
+        configurable: true
+        description: Group ID for file permissions
+    volumes:
+      - name: audiobookshelf-config
+        path: /config
+        size: 1024
+      - name: audiobookshelf-metadata
+        path: /metadata
+        size: 5120
+      - name: audiobookshelf-audiobooks
+        path: /audiobooks
+        size: 102400
+      - name: audiobookshelf-podcasts
+        path: /podcasts
+        size: 51200
+    health_check:
+      type: http
+      path: /healthcheck
+      port: 80
+      initial_delay: 15
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 80
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

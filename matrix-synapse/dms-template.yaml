@@ -1,0 +1,96 @@
+version: "1"
+
+# Template metadata
+name: matrix-synapse
+description: Synapse is the reference homeserver implementation for Matrix, an open standard for secure, decentralized real-time communication.
+icon: https://matrix.org/images/matrix-logo-white.svg
+category: communication
+tags:
+  - chat
+  - matrix
+  - federation
+  - decentralized
+  - messaging
+
+# Supported versions
+versions:
+  - "v1.101.0"
+  - "v1.100.0"
+  - "latest"
+defaultVersion: "v1.101.0"
+
+# Service definitions
+services:
+  - name: synapse
+    type: web
+    image: "matrixdotorg/synapse:${VERSION}"
+    ports:
+      - port: 8008
+      - port: 8448
+    env:
+      - key: SYNAPSE_SERVER_NAME
+        configurable: true
+        description: Server name (your domain)
+      - key: SYNAPSE_REPORT_STATS
+        default: "no"
+        configurable: true
+        description: Report anonymous statistics
+      - key: SYNAPSE_CONFIG_DIR
+        value: "/data"
+        description: Configuration directory
+      - key: SYNAPSE_DATA_DIR
+        value: "/data"
+        description: Data directory
+      - key: SYNAPSE_LOG_LEVEL
+        default: "INFO"
+        configurable: true
+        description: Log level
+      - key: SYNAPSE_ENABLE_REGISTRATION
+        default: "false"
+        configurable: true
+        description: Enable new user registration
+      - key: SYNAPSE_NO_TLS
+        default: "true"
+        configurable: true
+        description: Disable TLS (use reverse proxy)
+      - key: POSTGRES_HOST
+        configurable: true
+        description: PostgreSQL host
+      - key: POSTGRES_PORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: POSTGRES_DB
+        default: "synapse"
+        configurable: true
+        description: PostgreSQL database name
+      - key: POSTGRES_USER
+        default: "synapse"
+        configurable: true
+        description: PostgreSQL username
+      - key: POSTGRES_PASSWORD
+        generator: password
+        description: PostgreSQL password
+    volumes:
+      - name: synapse-data
+        path: /data
+        size: 10240
+    health_check:
+      type: http
+      path: /health
+      port: 8008
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 500
+    memory: 1024
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8008
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

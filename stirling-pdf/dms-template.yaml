@@ -1,0 +1,71 @@
+version: "1"
+
+# Template metadata
+name: stirling-pdf
+description: Stirling PDF is a locally hosted web application that allows you to perform various operations on PDF files including merging, splitting, converting, and OCR.
+icon: https://raw.githubusercontent.com/Stirling-Tools/Stirling-PDF/main/docs/stirling.png
+category: utility
+tags:
+  - pdf
+  - documents
+  - conversion
+  - ocr
+  - utility
+
+# Supported versions
+versions:
+  - "0.24.0"
+  - "0.23.0"
+  - "latest"
+defaultVersion: "0.24.0"
+
+# Service definitions
+services:
+  - name: stirling-pdf
+    type: web
+    image: "frooodle/s-pdf:${VERSION}"
+    ports:
+      - port: 8080
+    env:
+      - key: DOCKER_ENABLE_SECURITY
+        default: "false"
+        configurable: true
+        description: Enable authentication
+      - key: SECURITY_ENABLELOGIN
+        default: "false"
+        configurable: true
+        description: Enable login page
+      - key: LANGS
+        default: "en_US"
+        configurable: true
+        description: Languages for OCR (comma-separated)
+      - key: INSTALL_BOOK_AND_ADVANCED_HTML_OPS
+        default: "false"
+        configurable: true
+        description: Install additional calibre dependencies
+    volumes:
+      - name: stirling-data
+        path: /usr/share/tessdata
+        size: 1024
+      - name: stirling-configs
+        path: /configs
+        size: 128
+    health_check:
+      type: http
+      path: /
+      port: 8080
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8080
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

@@ -1,0 +1,76 @@
+version: "1"
+
+# Template metadata
+name: jaeger
+description: Jaeger is a distributed tracing platform used for monitoring and troubleshooting microservices-based distributed systems, providing end-to-end observability.
+icon: https://raw.githubusercontent.com/jaegertracing/jaeger/main/model/proto/static/jaeger-logo.png
+category: monitoring
+tags:
+  - tracing
+  - distributed-tracing
+  - observability
+  - monitoring
+  - microservices
+
+# Supported versions
+versions:
+  - "1.54"
+  - "1.53"
+  - "latest"
+defaultVersion: "1.54"
+
+# Service definitions
+services:
+  - name: jaeger
+    type: web
+    image: "jaegertracing/all-in-one:${VERSION}"
+    ports:
+      - port: 16686
+      - port: 6831
+      - port: 14268
+    env:
+      - key: COLLECTOR_ZIPKIN_HOST_PORT
+        default: ":9411"
+        configurable: true
+        description: Zipkin collector port
+      - key: COLLECTOR_OTLP_ENABLED
+        default: "true"
+        configurable: true
+        description: Enable OTLP collector
+      - key: SPAN_STORAGE_TYPE
+        default: "badger"
+        configurable: true
+        description: Storage type (memory, badger, elasticsearch, cassandra)
+      - key: BADGER_EPHEMERAL
+        default: "false"
+        configurable: true
+        description: Use ephemeral badger storage
+      - key: BADGER_DIRECTORY_VALUE
+        value: "/badger/data"
+        description: Badger data directory
+      - key: BADGER_DIRECTORY_KEY
+        value: "/badger/key"
+        description: Badger key directory
+    volumes:
+      - name: jaeger-data
+        path: /badger
+        size: 10240
+    health_check:
+      type: http
+      path: /
+      port: 16686
+      initial_delay: 10
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 16686
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

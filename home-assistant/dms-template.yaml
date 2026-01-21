@@ -1,0 +1,64 @@
+version: "1"
+
+# Template metadata
+name: home-assistant
+description: Home Assistant is an open-source home automation platform that puts local control and privacy first, supporting thousands of devices and services.
+icon: https://raw.githubusercontent.com/home-assistant/assets/master/logo/logo.png
+category: automation
+tags:
+  - home-automation
+  - iot
+  - smart-home
+  - automation
+  - integrations
+
+# Supported versions
+versions:
+  - "2024.2"
+  - "2024.1"
+  - "stable"
+defaultVersion: "2024.2"
+
+# Service definitions
+services:
+  - name: home-assistant
+    type: web
+    image: "ghcr.io/home-assistant/home-assistant:${VERSION}"
+    ports:
+      - port: 8123
+    env:
+      - key: TZ
+        default: "UTC"
+        configurable: true
+        description: Timezone for the container
+      - key: PUID
+        default: "1000"
+        configurable: true
+        description: User ID for file permissions
+      - key: PGID
+        default: "1000"
+        configurable: true
+        description: Group ID for file permissions
+    volumes:
+      - name: homeassistant-config
+        path: /config
+        size: 5120
+    health_check:
+      type: http
+      path: /api/
+      port: 8123
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8123
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

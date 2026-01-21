@@ -1,0 +1,89 @@
+version: "1"
+
+# Template metadata
+name: rocketchat
+description: Rocket.Chat is an open-source team communication platform with real-time chat, video conferencing, file sharing, and extensive integrations.
+icon: https://raw.githubusercontent.com/RocketChat/Rocket.Chat.Artwork/master/Logos/2020/png/logo-horizontal-red.png
+category: communication
+tags:
+  - chat
+  - communication
+  - team-collaboration
+  - messaging
+  - video-conferencing
+
+# Supported versions
+versions:
+  - "6.5"
+  - "6.4"
+  - "latest"
+defaultVersion: "6.5"
+
+# Service definitions
+services:
+  - name: rocketchat
+    type: web
+    image: "rocket.chat:${VERSION}"
+    ports:
+      - port: 3000
+    env:
+      - key: ROOT_URL
+        default: "http://localhost:3000"
+        configurable: true
+        description: Full URL to Rocket.Chat
+      - key: PORT
+        value: "3000"
+        description: Application port
+      - key: MONGO_URL
+        configurable: true
+        description: MongoDB connection URL
+      - key: MONGO_OPLOG_URL
+        configurable: true
+        description: MongoDB oplog URL for high availability
+      - key: DEPLOY_METHOD
+        value: "docker"
+        description: Deployment method
+      - key: DEPLOY_PLATFORM
+        value: "docker"
+        description: Deployment platform
+      - key: REG_TOKEN
+        configurable: true
+        description: Registration token for cloud features
+      - key: OVERWRITE_SETTING_Show_Setup_Wizard
+        default: "pending"
+        configurable: true
+        description: Show setup wizard on first launch
+      - key: ADMIN_USERNAME
+        default: "admin"
+        configurable: true
+        description: Initial admin username
+      - key: ADMIN_PASS
+        generator: password
+        description: Initial admin password
+      - key: ADMIN_EMAIL
+        default: "admin@example.com"
+        configurable: true
+        description: Admin email address
+    volumes:
+      - name: rocketchat-uploads
+        path: /app/uploads
+        size: 10240
+    health_check:
+      type: http
+      path: /api/info
+      port: 3000
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 500
+    memory: 1024
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 3000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

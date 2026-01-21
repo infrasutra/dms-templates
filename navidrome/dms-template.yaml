@@ -1,0 +1,87 @@
+version: "1"
+
+# Template metadata
+name: navidrome
+description: Navidrome is a modern music server and streamer compatible with Subsonic/Airsonic, allowing you to enjoy your music collection from anywhere.
+icon: https://raw.githubusercontent.com/navidrome/navidrome/master/resources/logo.png
+category: media
+tags:
+  - music
+  - media
+  - streaming
+  - subsonic
+  - audio
+
+# Supported versions
+versions:
+  - "0.51.0"
+  - "0.50.0"
+  - "latest"
+defaultVersion: "0.51.0"
+
+# Service definitions
+services:
+  - name: navidrome
+    type: web
+    image: "deluan/navidrome:${VERSION}"
+    ports:
+      - port: 4533
+    env:
+      - key: ND_SCANSCHEDULE
+        default: "1h"
+        configurable: true
+        description: Library scan schedule
+      - key: ND_LOGLEVEL
+        default: "info"
+        configurable: true
+        description: Log level (error, warn, info, debug, trace)
+      - key: ND_SESSIONTIMEOUT
+        default: "24h"
+        configurable: true
+        description: Session timeout duration
+      - key: ND_BASEURL
+        default: ""
+        configurable: true
+        description: Base URL if behind a proxy
+      - key: ND_ENABLETRANSCODINGCONFIG
+        default: "true"
+        configurable: true
+        description: Allow users to configure transcoding
+      - key: ND_TRANSCODINGCACHESIZE
+        default: "100MB"
+        configurable: true
+        description: Transcoding cache size
+      - key: ND_IMAGECACHESIZE
+        default: "100MB"
+        configurable: true
+        description: Image cache size
+      - key: ND_AUTOIMPORTPLAYLISTS
+        default: "true"
+        configurable: true
+        description: Auto-import playlists from music folders
+    volumes:
+      - name: navidrome-data
+        path: /data
+        size: 1024
+      - name: navidrome-music
+        path: /music
+        size: 102400
+    health_check:
+      type: http
+      path: /ping
+      port: 4533
+      initial_delay: 15
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 4533
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

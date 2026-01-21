@@ -1,0 +1,50 @@
+version: "1"
+
+# Template metadata
+name: excalidraw
+description: Excalidraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams with a hand-drawn feel, perfect for wireframes, brainstorming, and illustrations.
+icon: https://raw.githubusercontent.com/excalidraw/excalidraw/master/public/apple-touch-icon.png
+category: collaboration
+tags:
+  - whiteboard
+  - drawing
+  - diagrams
+  - collaboration
+  - design
+
+# Supported versions
+versions:
+  - "latest"
+  - "sha-f18e5c7"
+defaultVersion: "latest"
+
+# Service definitions
+services:
+  - name: excalidraw
+    type: web
+    image: "excalidraw/excalidraw:${VERSION}"
+    ports:
+      - port: 80
+    env:
+      - key: NODE_ENV
+        value: "production"
+        description: Node environment
+    health_check:
+      type: http
+      path: /
+      port: 80
+      initial_delay: 10
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 80
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

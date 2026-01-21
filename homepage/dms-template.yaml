@@ -1,0 +1,60 @@
+version: "1"
+
+# Template metadata
+name: homepage
+description: Homepage is a modern, fully static, fast, and highly customizable application dashboard with integrations for over 100 services and widgets.
+icon: https://raw.githubusercontent.com/gethomepage/homepage/main/public/android-chrome-512x512.png
+category: dashboard
+tags:
+  - dashboard
+  - homepage
+  - self-hosted
+  - widgets
+  - integrations
+
+# Supported versions
+versions:
+  - "v0.8.0"
+  - "v0.7.0"
+  - "latest"
+defaultVersion: "v0.8.0"
+
+# Service definitions
+services:
+  - name: homepage
+    type: web
+    image: "ghcr.io/gethomepage/homepage:${VERSION}"
+    ports:
+      - port: 3000
+    env:
+      - key: PUID
+        default: "1000"
+        configurable: true
+        description: User ID for file permissions
+      - key: PGID
+        default: "1000"
+        configurable: true
+        description: Group ID for file permissions
+    volumes:
+      - name: homepage-config
+        path: /app/config
+        size: 128
+    health_check:
+      type: http
+      path: /
+      port: 3000
+      initial_delay: 15
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 3000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

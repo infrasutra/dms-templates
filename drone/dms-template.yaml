@@ -1,0 +1,103 @@
+version: "1"
+
+# Template metadata
+name: drone
+description: Drone is a container-native, self-service Continuous Integration platform for busy development teams, with simple YAML-based pipeline configuration.
+icon: https://raw.githubusercontent.com/drone/brand/master/logos/png/drone-logo-png-black.png
+category: devops
+tags:
+  - cicd
+  - continuous-integration
+  - automation
+  - devops
+  - pipelines
+
+# Supported versions
+versions:
+  - "2.21"
+  - "2.20"
+  - "latest"
+defaultVersion: "2.21"
+
+# Service definitions
+services:
+  - name: drone
+    type: web
+    image: "drone/drone:${VERSION}"
+    ports:
+      - port: 80
+      - port: 443
+    env:
+      - key: DRONE_SERVER_HOST
+        configurable: true
+        description: Server hostname
+      - key: DRONE_SERVER_PROTO
+        default: "https"
+        configurable: true
+        description: Server protocol (http or https)
+      - key: DRONE_RPC_SECRET
+        generator: password
+        description: Shared secret for runner authentication
+      - key: DRONE_GITHUB_CLIENT_ID
+        configurable: true
+        description: GitHub OAuth client ID
+      - key: DRONE_GITHUB_CLIENT_SECRET
+        generator: password
+        description: GitHub OAuth client secret
+      - key: DRONE_GITLAB_SERVER
+        configurable: true
+        description: GitLab server URL
+      - key: DRONE_GITLAB_CLIENT_ID
+        configurable: true
+        description: GitLab OAuth client ID
+      - key: DRONE_GITLAB_CLIENT_SECRET
+        generator: password
+        description: GitLab OAuth client secret
+      - key: DRONE_GITEA_SERVER
+        configurable: true
+        description: Gitea server URL
+      - key: DRONE_GITEA_CLIENT_ID
+        configurable: true
+        description: Gitea OAuth client ID
+      - key: DRONE_GITEA_CLIENT_SECRET
+        generator: password
+        description: Gitea OAuth client secret
+      - key: DRONE_USER_CREATE
+        default: "username:admin,admin:true"
+        configurable: true
+        description: Initial admin user
+      - key: DRONE_DATABASE_DRIVER
+        default: "sqlite3"
+        configurable: true
+        description: Database driver (sqlite3, postgres, mysql)
+      - key: DRONE_DATABASE_DATASOURCE
+        default: "/data/database.sqlite"
+        configurable: true
+        description: Database connection string
+      - key: DRONE_LOGS_DEBUG
+        default: "false"
+        configurable: true
+        description: Enable debug logging
+    volumes:
+      - name: drone-data
+        path: /data
+        size: 5120
+    health_check:
+      type: http
+      path: /healthz
+      port: 80
+      initial_delay: 15
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 80
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

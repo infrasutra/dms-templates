@@ -1,0 +1,79 @@
+version: "1"
+
+# Template metadata
+name: vault
+description: HashiCorp Vault is a tool for securely storing and accessing secrets, providing encryption, identity-based access, and detailed audit logs.
+icon: https://raw.githubusercontent.com/hashicorp/vault/main/ui/public/vault-logo.svg
+category: security
+tags:
+  - secrets
+  - security
+  - encryption
+  - hashicorp
+  - key-management
+
+# Supported versions
+versions:
+  - "1.15"
+  - "1.14"
+  - "latest"
+defaultVersion: "1.15"
+
+# Service definitions
+services:
+  - name: vault
+    type: web
+    image: "hashicorp/vault:${VERSION}"
+    ports:
+      - port: 8200
+    command:
+      - "server"
+      - "-dev"
+    env:
+      - key: VAULT_DEV_ROOT_TOKEN_ID
+        generator: password
+        description: Root token for dev mode
+      - key: VAULT_DEV_LISTEN_ADDRESS
+        value: "0.0.0.0:8200"
+        description: Address for Vault to listen on
+      - key: VAULT_ADDR
+        value: "http://0.0.0.0:8200"
+        description: Vault address for CLI
+      - key: VAULT_API_ADDR
+        default: "http://0.0.0.0:8200"
+        configurable: true
+        description: Full API address
+      - key: VAULT_LOG_LEVEL
+        default: "info"
+        configurable: true
+        description: Log level (trace, debug, info, warn, error)
+      - key: SKIP_SETCAP
+        default: "true"
+        configurable: true
+        description: Skip setcap for mlock
+    volumes:
+      - name: vault-data
+        path: /vault/file
+        size: 5120
+      - name: vault-logs
+        path: /vault/logs
+        size: 1024
+    health_check:
+      type: http
+      path: /v1/sys/health
+      port: 8200
+      initial_delay: 15
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 200
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8200
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

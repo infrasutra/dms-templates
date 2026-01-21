@@ -1,0 +1,73 @@
+version: "1"
+
+# Template metadata
+name: umami
+description: Umami is a simple, fast, privacy-focused alternative to Google Analytics that provides essential website statistics without tracking personal data.
+icon: https://raw.githubusercontent.com/umami-software/umami/master/public/android-chrome-512x512.png
+category: analytics
+tags:
+  - analytics
+  - web-analytics
+  - privacy
+  - statistics
+  - metrics
+
+# Supported versions
+versions:
+  - "v2.10.0"
+  - "v2.9.0"
+  - "latest"
+defaultVersion: "v2.10.0"
+
+# Service definitions
+services:
+  - name: umami
+    type: web
+    image: "ghcr.io/umami-software/umami:${VERSION}"
+    ports:
+      - port: 3000
+    env:
+      - key: DATABASE_URL
+        configurable: true
+        description: PostgreSQL connection URL (e.g., postgresql://user:pass@host:5432/umami)
+      - key: DATABASE_TYPE
+        value: "postgresql"
+        description: Database type
+      - key: APP_SECRET
+        generator: password
+        description: Secret for session encryption
+      - key: DISABLE_TELEMETRY
+        default: "true"
+        configurable: true
+        description: Disable anonymous telemetry
+      - key: TRACKER_SCRIPT_NAME
+        default: "script.js"
+        configurable: true
+        description: Name of the tracking script
+      - key: COLLECT_API_ENDPOINT
+        default: "/api/send"
+        configurable: true
+        description: API endpoint for data collection
+    volumes:
+      - name: umami-data
+        path: /app/data
+        size: 1024
+    health_check:
+      type: http
+      path: /api/heartbeat
+      port: 3000
+      initial_delay: 30
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 3000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

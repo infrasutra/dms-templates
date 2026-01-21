@@ -1,0 +1,104 @@
+version: "1"
+
+# Template metadata
+name: paperless-ngx
+description: Paperless-ngx is a document management system that transforms physical documents into a searchable online archive with OCR, tagging, and full-text search.
+icon: https://raw.githubusercontent.com/paperless-ngx/paperless-ngx/main/src-ui/src/assets/logo-notext.svg
+category: document-mgmt
+tags:
+  - documents
+  - ocr
+  - archive
+  - scanning
+  - paperless
+
+# Supported versions
+versions:
+  - "2.5"
+  - "2.4"
+  - "latest"
+defaultVersion: "2.5"
+
+# Service definitions
+services:
+  - name: paperless-ngx
+    type: web
+    image: "ghcr.io/paperless-ngx/paperless-ngx:${VERSION}"
+    ports:
+      - port: 8000
+    env:
+      - key: PAPERLESS_SECRET_KEY
+        generator: password
+        description: Secret key for cryptographic signing
+      - key: PAPERLESS_DBENGINE
+        value: "postgresql"
+        description: Database engine
+      - key: PAPERLESS_DBHOST
+        configurable: true
+        description: PostgreSQL host
+      - key: PAPERLESS_DBPORT
+        default: "5432"
+        configurable: true
+        description: PostgreSQL port
+      - key: PAPERLESS_DBNAME
+        default: "paperless"
+        configurable: true
+        description: Database name
+      - key: PAPERLESS_DBUSER
+        default: "paperless"
+        configurable: true
+        description: Database username
+      - key: PAPERLESS_DBPASS
+        generator: password
+        description: Database password
+      - key: PAPERLESS_REDIS
+        configurable: true
+        description: Redis URL (e.g., redis://redis:6379)
+      - key: PAPERLESS_ADMIN_USER
+        default: "admin"
+        configurable: true
+        description: Initial admin username
+      - key: PAPERLESS_ADMIN_PASSWORD
+        generator: password
+        description: Initial admin password
+      - key: PAPERLESS_ADMIN_MAIL
+        default: "admin@example.com"
+        configurable: true
+        description: Admin email address
+      - key: PAPERLESS_OCR_LANGUAGE
+        default: "eng"
+        configurable: true
+        description: OCR language(s), e.g., eng+deu+fra
+      - key: PAPERLESS_TIME_ZONE
+        default: "UTC"
+        configurable: true
+        description: Timezone
+    volumes:
+      - name: paperless-data
+        path: /usr/src/paperless/data
+        size: 5120
+      - name: paperless-media
+        path: /usr/src/paperless/media
+        size: 51200
+      - name: paperless-consume
+        path: /usr/src/paperless/consume
+        size: 5120
+    health_check:
+      type: http
+      path: /api/
+      port: 8000
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 500
+    memory: 1024
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

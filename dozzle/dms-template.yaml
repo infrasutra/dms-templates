@@ -1,0 +1,67 @@
+version: "1"
+
+# Template metadata
+name: dozzle
+description: Dozzle is a real-time log viewer for Docker containers with a web-based interface, providing instant access to container logs without storing data.
+icon: https://raw.githubusercontent.com/amir20/dozzle/master/.github/dozzle.png
+category: container-mgmt
+tags:
+  - containers
+  - logs
+  - docker
+  - monitoring
+  - devops
+
+# Supported versions
+versions:
+  - "v7.0.0"
+  - "v6.5.0"
+  - "latest"
+defaultVersion: "v7.0.0"
+
+# Service definitions
+services:
+  - name: dozzle
+    type: web
+    image: "amir20/dozzle:${VERSION}"
+    ports:
+      - port: 8080
+    env:
+      - key: DOZZLE_LEVEL
+        default: "info"
+        configurable: true
+        description: Log level (debug, info, warn, error)
+      - key: DOZZLE_NO_ANALYTICS
+        default: "true"
+        configurable: true
+        description: Disable anonymous analytics
+      - key: DOZZLE_AUTH_PROVIDER
+        default: "none"
+        configurable: true
+        description: Authentication provider (none, simple, forward-proxy)
+      - key: DOZZLE_USERNAME
+        default: "admin"
+        configurable: true
+        description: Username for simple auth
+      - key: DOZZLE_PASSWORD
+        generator: password
+        description: Password for simple auth
+    health_check:
+      type: http
+      path: /
+      port: 8080
+      initial_delay: 10
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 100
+    memory: 128
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8080
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

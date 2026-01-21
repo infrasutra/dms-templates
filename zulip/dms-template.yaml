@@ -1,0 +1,102 @@
+version: "1"
+
+# Template metadata
+name: zulip
+description: Zulip is a powerful, open-source team chat application combining real-time chat with threaded conversations for more productive team communication.
+icon: https://raw.githubusercontent.com/zulip/zulip/main/static/images/logo/zulip-icon-128x128.png
+category: communication
+tags:
+  - chat
+  - communication
+  - threads
+  - team-collaboration
+  - messaging
+
+# Supported versions
+versions:
+  - "8.2-0"
+  - "8.1-0"
+  - "latest"
+defaultVersion: "8.2-0"
+
+# Service definitions
+services:
+  - name: zulip
+    type: web
+    image: "zulip/docker-zulip:${VERSION}"
+    ports:
+      - port: 80
+      - port: 443
+    env:
+      - key: SETTING_EXTERNAL_HOST
+        configurable: true
+        description: External hostname
+      - key: SETTING_ZULIP_ADMINISTRATOR
+        default: "admin@example.com"
+        configurable: true
+        description: Admin email address
+      - key: SETTING_EMAIL_HOST
+        configurable: true
+        description: SMTP server host
+      - key: SETTING_EMAIL_HOST_USER
+        configurable: true
+        description: SMTP username
+      - key: SETTING_EMAIL_HOST_PASSWORD
+        generator: password
+        description: SMTP password
+      - key: SETTING_EMAIL_PORT
+        default: "587"
+        configurable: true
+        description: SMTP port
+      - key: SETTING_EMAIL_USE_TLS
+        default: "true"
+        configurable: true
+        description: Use TLS for email
+      - key: SECRETS_email_password
+        generator: password
+        description: Email password secret
+      - key: SECRETS_rabbitmq_password
+        generator: password
+        description: RabbitMQ password
+      - key: SECRETS_postgres_password
+        generator: password
+        description: PostgreSQL password
+      - key: SECRETS_memcached_password
+        generator: password
+        description: Memcached password
+      - key: SECRETS_redis_password
+        generator: password
+        description: Redis password
+      - key: SECRETS_secret_key
+        generator: password
+        description: Django secret key
+      - key: DB_HOST
+        configurable: true
+        description: PostgreSQL host (leave empty for built-in)
+      - key: DISABLE_HTTPS
+        default: "true"
+        configurable: true
+        description: Disable HTTPS (use reverse proxy)
+    volumes:
+      - name: zulip-data
+        path: /data
+        size: 20480
+    health_check:
+      type: http
+      path: /api/v1/server_settings
+      port: 80
+      initial_delay: 120
+      interval: 60
+      timeout: 30
+      retries: 10
+    cpu: 1000
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 80
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

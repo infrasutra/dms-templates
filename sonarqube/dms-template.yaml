@@ -1,0 +1,79 @@
+version: "1"
+
+# Template metadata
+name: sonarqube
+description: SonarQube is a leading code quality and security analysis platform that continuously inspects code to detect bugs, vulnerabilities, and code smells.
+icon: https://raw.githubusercontent.com/SonarSource/sonarqube/master/server/sonar-web/public/favicon.ico
+category: devops
+tags:
+  - code-quality
+  - security
+  - static-analysis
+  - devops
+  - cicd
+
+# Supported versions
+versions:
+  - "10.4-community"
+  - "10.3-community"
+  - "lts-community"
+defaultVersion: "10.4-community"
+
+# Service definitions
+services:
+  - name: sonarqube
+    type: web
+    image: "sonarqube:${VERSION}"
+    ports:
+      - port: 9000
+    env:
+      - key: SONAR_JDBC_URL
+        configurable: true
+        description: JDBC URL (e.g., jdbc:postgresql://host:5432/sonarqube)
+      - key: SONAR_JDBC_USERNAME
+        default: "sonarqube"
+        configurable: true
+        description: Database username
+      - key: SONAR_JDBC_PASSWORD
+        generator: password
+        description: Database password
+      - key: SONAR_WEB_CONTEXT
+        default: ""
+        configurable: true
+        description: Web context path (e.g., /sonar)
+      - key: SONAR_WEB_PORT
+        value: "9000"
+        description: Web server port
+      - key: SONAR_SEARCH_JAVAADDITIONALOPTS
+        default: "-Dnode.store.allow_mmap=false"
+        configurable: true
+        description: Additional Elasticsearch JVM options
+    volumes:
+      - name: sonarqube-data
+        path: /opt/sonarqube/data
+        size: 10240
+      - name: sonarqube-extensions
+        path: /opt/sonarqube/extensions
+        size: 2048
+      - name: sonarqube-logs
+        path: /opt/sonarqube/logs
+        size: 2048
+    health_check:
+      type: http
+      path: /api/system/status
+      port: 9000
+      initial_delay: 120
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 500
+    memory: 2048
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 9000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

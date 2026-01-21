@@ -1,0 +1,67 @@
+version: "1"
+
+# Template metadata
+name: caddy
+description: Caddy is a powerful, enterprise-ready web server with automatic HTTPS, serving static files, reverse proxying, and load balancing out of the box.
+icon: https://caddyserver.com/resources/images/caddy-logo.svg
+category: proxy
+tags:
+  - proxy
+  - web-server
+  - reverse-proxy
+  - https
+  - auto-ssl
+
+# Supported versions
+versions:
+  - "2.7"
+  - "2.6"
+  - "alpine"
+defaultVersion: "2.7"
+
+# Service definitions
+services:
+  - name: caddy
+    type: web
+    image: "caddy:${VERSION}"
+    ports:
+      - port: 80
+      - port: 443
+    env:
+      - key: CADDY_ADMIN
+        default: "0.0.0.0:2019"
+        configurable: true
+        description: Admin API address (set to empty to disable)
+      - key: ACME_AGREE
+        default: "true"
+        configurable: true
+        description: Agree to ACME CA's terms
+      - key: CADDY_TLS_EMAIL
+        configurable: true
+        description: Email for automatic TLS certificates
+    volumes:
+      - name: caddy-data
+        path: /data
+        size: 1024
+      - name: caddy-config
+        path: /config
+        size: 128
+    health_check:
+      type: http
+      path: /
+      port: 80
+      initial_delay: 10
+      interval: 30
+      timeout: 10
+      retries: 3
+    cpu: 100
+    memory: 128
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 80
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

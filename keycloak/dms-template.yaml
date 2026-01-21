@@ -1,0 +1,86 @@
+version: "1"
+
+# Template metadata
+name: keycloak
+description: Keycloak is an open-source Identity and Access Management solution providing single sign-on, user federation, identity brokering, and social login capabilities.
+icon: https://www.keycloak.org/resources/images/logo.svg
+category: security
+tags:
+  - security
+  - authentication
+  - sso
+  - identity
+  - iam
+  - oauth
+
+# Supported versions
+versions:
+  - "24.0"
+  - "23.0"
+  - "22.0"
+defaultVersion: "24.0"
+
+# Service definitions
+services:
+  - name: keycloak
+    type: web
+    image: "quay.io/keycloak/keycloak:${VERSION}"
+    ports:
+      - port: 8080
+    command:
+      - "start-dev"
+    env:
+      - key: KC_DB
+        value: "postgres"
+        description: Database type
+      - key: KC_DB_URL
+        configurable: true
+        description: JDBC URL for PostgreSQL (e.g., jdbc:postgresql://host:5432/keycloak)
+      - key: KC_DB_USERNAME
+        default: "keycloak"
+        configurable: true
+        description: Database username
+      - key: KC_DB_PASSWORD
+        generator: password
+        description: Database password
+      - key: KEYCLOAK_ADMIN
+        default: "admin"
+        configurable: true
+        description: Initial admin username
+      - key: KEYCLOAK_ADMIN_PASSWORD
+        generator: password
+        description: Initial admin password
+      - key: KC_HOSTNAME
+        configurable: true
+        description: Hostname for Keycloak (required for production)
+      - key: KC_PROXY
+        default: "edge"
+        configurable: true
+        description: Proxy mode (edge, reencrypt, passthrough)
+      - key: KC_HTTP_ENABLED
+        default: "true"
+        configurable: true
+        description: Enable HTTP listener
+    volumes:
+      - name: keycloak-data
+        path: /opt/keycloak/data
+        size: 5120
+    health_check:
+      type: http
+      path: /health/ready
+      port: 8080
+      initial_delay: 60
+      interval: 30
+      timeout: 10
+      retries: 5
+    cpu: 500
+    memory: 1024
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8080
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

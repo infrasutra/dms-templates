@@ -1,0 +1,78 @@
+version: "1"
+
+# Template metadata
+name: gitlab
+description: GitLab is a complete DevOps platform delivered as a single application, providing source code management, CI/CD, security testing, and project management.
+icon: https://about.gitlab.com/images/press/press-kit-icon.svg
+category: devops
+tags:
+  - git
+  - devops
+  - cicd
+  - source-control
+  - project-management
+
+# Supported versions
+versions:
+  - "16.9.0-ce.0"
+  - "16.8.0-ce.0"
+  - "latest"
+defaultVersion: "16.9.0-ce.0"
+
+# Service definitions
+services:
+  - name: gitlab
+    type: web
+    image: "gitlab/gitlab-ce:${VERSION}"
+    ports:
+      - port: 80
+      - port: 443
+      - port: 22
+    env:
+      - key: GITLAB_OMNIBUS_CONFIG
+        default: "external_url 'http://localhost'"
+        configurable: true
+        description: GitLab Omnibus configuration
+      - key: GITLAB_ROOT_PASSWORD
+        generator: password
+        description: Initial root password
+      - key: GITLAB_TIMEZONE
+        default: "UTC"
+        configurable: true
+        description: Server timezone
+      - key: GITLAB_SHARED_RUNNERS_REGISTRATION_TOKEN
+        generator: password
+        description: Registration token for shared runners
+      - key: TZ
+        default: "UTC"
+        configurable: true
+        description: Container timezone
+    volumes:
+      - name: gitlab-config
+        path: /etc/gitlab
+        size: 1024
+      - name: gitlab-logs
+        path: /var/log/gitlab
+        size: 5120
+      - name: gitlab-data
+        path: /var/opt/gitlab
+        size: 51200
+    health_check:
+      type: http
+      path: /-/health
+      port: 80
+      initial_delay: 300
+      interval: 60
+      timeout: 30
+      retries: 10
+    cpu: 2000
+    memory: 4096
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 80
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

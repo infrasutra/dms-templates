@@ -1,0 +1,79 @@
+version: "1"
+
+# Template metadata
+name: watchtower
+description: Watchtower is a container-based solution for automating Docker container base image updates, automatically pulling and restarting containers with new images.
+icon: https://raw.githubusercontent.com/containrrr/watchtower/main/.github/watchtower-logo-1.png
+category: container-mgmt
+tags:
+  - containers
+  - docker
+  - updates
+  - automation
+  - devops
+
+# Supported versions
+versions:
+  - "1.7.1"
+  - "1.6.0"
+  - "latest"
+defaultVersion: "1.7.1"
+
+# Service definitions
+services:
+  - name: watchtower
+    type: worker
+    image: "containrrr/watchtower:${VERSION}"
+    env:
+      - key: WATCHTOWER_POLL_INTERVAL
+        default: "86400"
+        configurable: true
+        description: Poll interval in seconds (default 24h)
+      - key: WATCHTOWER_CLEANUP
+        default: "true"
+        configurable: true
+        description: Remove old images after updating
+      - key: WATCHTOWER_INCLUDE_STOPPED
+        default: "false"
+        configurable: true
+        description: Include stopped containers
+      - key: WATCHTOWER_INCLUDE_RESTARTING
+        default: "false"
+        configurable: true
+        description: Include restarting containers
+      - key: WATCHTOWER_NO_RESTART
+        default: "false"
+        configurable: true
+        description: Only update, don't restart containers
+      - key: WATCHTOWER_SCHEDULE
+        configurable: true
+        description: Cron schedule (e.g., "0 0 4 * * *")
+      - key: WATCHTOWER_NOTIFICATIONS
+        default: "shoutrrr"
+        configurable: true
+        description: Notification type
+      - key: WATCHTOWER_NOTIFICATION_URL
+        configurable: true
+        description: Notification URL (shoutrrr format)
+      - key: TZ
+        default: "UTC"
+        configurable: true
+        description: Timezone
+    health_check:
+      type: exec
+      command: ["test", "-f", "/tmp/watchtower.started"]
+      initial_delay: 30
+      interval: 60
+      timeout: 10
+      retries: 3
+    cpu: 50
+    memory: 64
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8080
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system
