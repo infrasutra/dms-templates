@@ -14,10 +14,9 @@ tags:
 
 # Supported versions
 versions:
+  - "4.3-management"
   - "3.13-management"
-  - "3.12-management"
-  - "3.11-management"
-defaultVersion: "3.13-management"
+defaultVersion: "4.3-management"
 
 # Service definitions
 services:

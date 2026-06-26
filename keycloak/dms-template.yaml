@@ -15,10 +15,10 @@ tags:
 
 # Supported versions
 versions:
+  - "26.0"
+  - "25.0"
   - "24.0"
-  - "23.0"
-  - "22.0"
-defaultVersion: "24.0"
+defaultVersion: "26.0"
 
 # Service definitions
 services:

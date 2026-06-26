@@ -14,10 +14,10 @@ tags:
 
 # Supported versions
 versions:
-  - "10.4-community"
-  - "10.3-community"
-  - "lts-community"
-defaultVersion: "10.4-community"
+  - "10.7-community"
+  - "10.6-community"
+  - "10.5-community"
+defaultVersion: "10.7-community"
 
 # Service definitions
 services:

@@ -14,10 +14,10 @@ tags:
 
 # Supported versions
 versions:
-  - "16.9.0-ce.0"
-  - "16.8.0-ce.0"
-  - "latest"
-defaultVersion: "16.9.0-ce.0"
+  - "19.1.1-ce.0"
+  - "18.11.6-ce.0"
+  - "17.11.7-ce.0"
+defaultVersion: "19.1.1-ce.0"
 
 # Service definitions
 services:

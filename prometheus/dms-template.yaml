@@ -14,10 +14,9 @@ tags:
 
 # Supported versions
 versions:
-  - "v2.50.0"
-  - "v2.49.0"
-  - "v2.48.0"
-defaultVersion: "v2.50.0"
+  - "v3.12.0"
+  - "v2.55.1"
+defaultVersion: "v3.12.0"
 
 # Service definitions
 services:
