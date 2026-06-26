@@ -14,10 +14,10 @@ tags:
 
 # Supported versions
 versions:
-  - "1.21"
-  - "1.20"
-  - "1.19"
-defaultVersion: "1.21"
+  - "1.26"
+  - "1.25"
+  - "1.24"
+defaultVersion: "1.26"
 
 # Service definitions
 services:

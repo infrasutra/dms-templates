@@ -14,10 +14,10 @@ tags:
 
 # Supported versions
 versions:
-  - "lts"
-  - "lts-jdk17"
   - "lts-jdk21"
-defaultVersion: "lts-jdk17"
+  - "lts-jdk25"
+  - "lts"
+defaultVersion: "lts-jdk21"
 
 # Service definitions
 services:

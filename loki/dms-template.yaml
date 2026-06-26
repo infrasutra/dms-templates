@@ -14,10 +14,9 @@ tags:
 
 # Supported versions
 versions:
-  - "2.9.0"
-  - "2.8.0"
-  - "main"
-defaultVersion: "2.9.0"
+  - "3.7.3"
+  - "2.9.10"
+defaultVersion: "3.7.3"
 
 # Service definitions
 services:

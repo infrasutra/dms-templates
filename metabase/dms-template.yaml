@@ -14,10 +14,10 @@ tags:
 
 # Supported versions
 versions:
-  - "v0.48.0"
-  - "v0.47.0"
-  - "v0.46.0"
-defaultVersion: "v0.48.0"
+  - "v0.62.3"
+  - "v0.61.6"
+  - "v0.60.11"
+defaultVersion: "v0.62.3"
 
 # Service definitions
 services:

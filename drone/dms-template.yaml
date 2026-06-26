@@ -14,10 +14,10 @@ tags:
 
 # Supported versions
 versions:
-  - "2.21"
-  - "2.20"
-  - "latest"
-defaultVersion: "2.21"
+  - "2.28"
+  - "2.27"
+  - "2.26"
+defaultVersion: "2.28"
 
 # Service definitions
 services:
