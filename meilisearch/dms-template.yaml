@@ -1,0 +1,54 @@
+version: "1"
+
+# Template metadata
+name: meilisearch
+description: Meilisearch is a lightning-fast, open-source search engine that fits effortlessly into any workflow. It provides an intuitive REST API with relevance-focused results, typo tolerance, and faceted search out of the box.
+icon: https://raw.githubusercontent.com/meilisearch/meilisearch/main/assets/logo.svg
+category: search
+tags:
+  - search
+  - database
+  - full-text
+  - meilisearch
+
+# Supported versions
+versions:
+  - "v1.15.2"
+  - "v1.14.0"
+  - "v1.13.3"
+defaultVersion: "v1.15.2"
+
+# Service definitions
+services:
+  - name: meilisearch
+    type: worker
+    image: "getmeili/meilisearch:${VERSION}"
+    ports:
+      - port: 7700
+    env:
+      - key: MEILI_MASTER_KEY
+        generator: secret
+        description: Master key used to authenticate and create API keys for the Meilisearch instance
+    volumes:
+      - name: meili-data
+        path: /meili_data
+        size: 4096
+    health_check:
+      type: http
+      path: /health
+      port: 7700
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 150
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 7700
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

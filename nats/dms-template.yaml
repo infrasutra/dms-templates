@@ -1,0 +1,49 @@
+version: "1"
+
+name: nats
+description: NATS is a connective technology built for the ever increasingly hyper-connected world. It is a simple, secure and performant communications system for digital systems, services and devices.
+icon: https://nats.io/img/logos/nats-icon-color.png
+category: messaging
+tags:
+  - messaging
+  - pubsub
+  - streaming
+  - jetstream
+  - nats
+
+versions:
+  - "2.10"
+  - "2.9"
+  - "2.8"
+defaultVersion: "2.10"
+
+services:
+  - name: nats
+    type: worker
+    image: "nats:${VERSION}-alpine"
+    args:
+      - "-js"
+      - "-m"
+      - "8222"
+    ports:
+      - port: 4222
+      - port: 8222
+    health_check:
+      type: http
+      path: /healthz
+      port: 8222
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 100
+    memory: 128
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 4222
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

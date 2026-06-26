@@ -1,0 +1,55 @@
+version: "1"
+
+name: scylladb
+description: ScyllaDB is a high-performance NoSQL database fully compatible with Apache Cassandra and DynamoDB. Written in C++, it delivers significantly lower latency and higher throughput than Cassandra by leveraging a shard-per-core architecture.
+icon: https://www.scylladb.com/wp-content/uploads/scylla-opensource-1.png
+category: database
+tags:
+  - database
+  - nosql
+  - cassandra-compatible
+  - wide-column
+
+versions:
+  - "6.2.3"
+  - "6.2.2"
+  - "6.2.1"
+defaultVersion: "6.2.3"
+
+services:
+  - name: scylladb
+    type: worker
+    image: "scylladb/scylla:${VERSION}"
+    args:
+      - "--smp"
+      - "1"
+      - "--memory"
+      - "1G"
+      - "--overprovisioned"
+      - "1"
+      - "--developer-mode"
+      - "1"
+    ports:
+      - port: 9042
+    volumes:
+      - name: scylladb-data
+        path: /var/lib/scylla
+        size: 6144
+    health_check:
+      type: exec
+      command: ["cqlsh", "-e", "describe cluster"]
+      initial_delay: 30
+      interval: 15
+      timeout: 10
+      retries: 5
+    cpu: 250
+    memory: 1536
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 9042
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system
