@@ -14,9 +14,9 @@ tags:
 
 # Supported versions
 versions:
-  - "2.7"
-  - "2.6"
-defaultVersion: "2.7"
+  - "2"
+  - "1.11"
+defaultVersion: "2"
 
 # Service definitions
 services:
