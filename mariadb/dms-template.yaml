@@ -14,11 +14,10 @@ tags:
 
 # Supported versions
 versions:
+  - "12"
+  - "11.8"
   - "11.4"
-  - "11.2"
-  - "10.11"
-  - "10.6"
-defaultVersion: "11.4"
+defaultVersion: "12"
 
 # Service definitions
 services:
