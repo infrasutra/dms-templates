@@ -1,0 +1,52 @@
+version: "1"
+
+name: dragonfly
+description: Dragonfly is a modern in-memory datastore that is fully compatible with Redis and Memcached APIs. It delivers 25x more throughput and higher cache hit rates with a multi-threaded, shared-nothing architecture.
+icon: https://www.dragonflydb.io/dragonfly-vertical.svg
+category: cache
+tags:
+  - cache
+  - database
+  - in-memory
+  - key-value
+  - redis-compatible
+  - high-performance
+
+versions:
+  - "v1.25.0"
+  - "v1.24.0"
+  - "v1.23.2"
+defaultVersion: "v1.25.0"
+
+services:
+  - name: dragonfly
+    type: worker
+    image: "docker.dragonflydb.io/dragonflydb/dragonfly:${VERSION}"
+    ports:
+      - port: 6379
+    env:
+      - key: DFLY_requirepass
+        generator: password
+        description: Dragonfly authentication password
+    volumes:
+      - name: dragonfly-data
+        path: /data
+        size: 2048
+    health_check:
+      type: exec
+      command: ["redis-cli", "-p", "6379", "ping"]
+      initial_delay: 5
+      interval: 10
+      timeout: 3
+      retries: 3
+    cpu: 100
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 6379
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

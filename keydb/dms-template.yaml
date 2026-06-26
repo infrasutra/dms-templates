@@ -1,0 +1,51 @@
+version: "1"
+
+name: keydb
+description: KeyDB is a high-performance fork of Redis with a focus on multithreading, memory efficiency, and active-active replication. It is fully compatible with the Redis protocol.
+category: cache
+tags:
+  - cache
+  - database
+  - in-memory
+  - key-value
+  - redis-compatible
+  - multithreaded
+
+versions:
+  - "alpine_x86_64_v6.3.4"
+  - "alpine_x86_64_v6.3.3"
+  - "alpine_x86_64_v6.3.2"
+defaultVersion: "alpine_x86_64_v6.3.4"
+
+services:
+  - name: keydb
+    type: worker
+    image: "eqalpha/keydb:${VERSION}"
+    ports:
+      - port: 6379
+    env:
+      - key: KEYDB_PASSWORD
+        generator: password
+        description: KeyDB authentication password
+    volumes:
+      - name: keydb-data
+        path: /data
+        size: 2048
+    health_check:
+      type: exec
+      command: ["keydb-cli", "ping"]
+      initial_delay: 5
+      interval: 10
+      timeout: 3
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 6379
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

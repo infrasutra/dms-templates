@@ -1,0 +1,97 @@
+version: "1"
+
+name: hasura
+description: Hasura is an instant GraphQL and REST API engine on top of PostgreSQL. It auto-generates a production-ready API with fine-grained access control, real-time subscriptions, and event triggers.
+icon: https://hasura.io/brand-assets/hasura-logo-primary-darkbg.svg
+category: developer-tools
+tags:
+  - graphql
+  - api
+  - postgres
+  - realtime
+  - hasura
+
+versions:
+  - "v2.43.0"
+  - "v2.42.0"
+  - "v2.40.0"
+defaultVersion: "v2.43.0"
+
+services:
+  - name: db
+    type: worker
+    image: "postgres:16-alpine"
+    ports:
+      - port: 5432
+    env:
+      # NOTE: the platform auto-builds the ref:db URL as
+      # postgresql://postgres:postgres@db:5432/postgres, so these creds must
+      # match for HASURA_GRAPHQL_DATABASE_URL (ref: db) to authenticate.
+      - key: POSTGRES_PASSWORD
+        value: postgres
+        description: PostgreSQL superuser password (matches the auto-built DATABASE_URL)
+      - key: POSTGRES_DB
+        value: postgres
+        description: Database name for Hasura metadata and application data
+    volumes:
+      - name: hasura-db-data
+        path: /var/lib/postgresql/data
+        size: 2048
+    health_check:
+      type: exec
+      command: ["pg_isready", "-U", "postgres"]
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 5432
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system
+
+  - name: hasura
+    type: worker
+    image: "hasura/graphql-engine:${VERSION}"
+    ports:
+      - port: 8080
+    env:
+      - key: HASURA_GRAPHQL_DATABASE_URL
+        ref: db
+        description: PostgreSQL connection URL (auto-built from the db service)
+      - key: HASURA_GRAPHQL_ENABLE_CONSOLE
+        default: "true"
+        configurable: true
+        description: Enable the Hasura console
+      - key: HASURA_GRAPHQL_DEV_MODE
+        default: "true"
+        configurable: true
+        description: Enable dev mode (detailed error messages)
+      - key: HASURA_GRAPHQL_ADMIN_SECRET
+        generator: secret
+        description: Admin secret to secure the Hasura console and API
+    health_check:
+      type: http
+      path: /healthz
+      port: 8080
+      initial_delay: 15
+      interval: 10
+      timeout: 5
+      retries: 5
+    cpu: 250
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8080
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

@@ -1,0 +1,49 @@
+version: "1"
+
+name: pocketbase
+description: PocketBase is an open-source backend in a single file with embedded SQLite database, realtime subscriptions, built-in auth, file storage, and an admin dashboard — zero infrastructure overhead.
+icon: https://pocketbase.io/images/logo.svg
+category: developer-tools
+tags:
+  - backend
+  - database
+  - sqlite
+  - realtime
+  - auth
+  - pocketbase
+
+versions:
+  - "0.28.0"
+  - "0.27.0"
+  - "0.26.0"
+defaultVersion: "0.28.0"
+
+services:
+  - name: pocketbase
+    type: worker
+    image: "ghcr.io/muchobien/pocketbase:${VERSION}"
+    ports:
+      - port: 8090
+    volumes:
+      - name: pb-data
+        path: /pb_data
+        size: 2048
+    health_check:
+      type: http
+      path: /api/health
+      port: 8090
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8090
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

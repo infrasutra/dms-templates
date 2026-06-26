@@ -1,0 +1,48 @@
+version: "1"
+
+name: verdaccio
+description: Verdaccio is a lightweight private npm proxy registry. It lets you host private packages, cache public registry packages, and control what packages are available in your organisation.
+icon: https://verdaccio.org/img/logo/uk/verdaccio-tiny-uk-no-bg.svg
+category: developer-tools
+tags:
+  - npm
+  - registry
+  - proxy
+  - devtools
+  - verdaccio
+
+versions:
+  - "6.0.5"
+  - "6.0.3"
+  - "5.31.1"
+defaultVersion: "6.0.5"
+
+services:
+  - name: verdaccio
+    type: worker
+    image: "verdaccio/verdaccio:${VERSION}"
+    ports:
+      - port: 4873
+    volumes:
+      - name: verdaccio-storage
+        path: /verdaccio/storage
+        size: 2048
+    health_check:
+      type: http
+      path: /-/ping
+      port: 4873
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 4873
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

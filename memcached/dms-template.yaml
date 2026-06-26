@@ -1,0 +1,41 @@
+version: "1"
+
+name: memcached
+description: Memcached is a high-performance, distributed memory object caching system intended for speeding up dynamic web applications by reducing database load.
+icon: https://raw.githubusercontent.com/docker-library/docs/master/memcached/logo.png
+category: cache
+tags:
+  - cache
+  - in-memory
+  - distributed
+
+versions:
+  - "1.6.38"
+  - "1.6.37"
+  - "1.6.36"
+defaultVersion: "1.6.38"
+
+services:
+  - name: memcached
+    type: worker
+    image: "memcached:${VERSION}-alpine"
+    ports:
+      - port: 11211
+    health_check:
+      type: exec
+      command: ["sh", "-c", "echo stats | nc -w1 localhost 11211 | grep -q uptime"]
+      initial_delay: 5
+      interval: 10
+      timeout: 3
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 11211
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

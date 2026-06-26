@@ -1,0 +1,61 @@
+version: "1"
+
+name: surrealdb
+description: SurrealDB is a multi-model cloud database that combines the power of a document database, a graph database, and a traditional relational database in one. It supports SQL-style querying, real-time subscriptions, and built-in authentication and permissions.
+icon: https://raw.githubusercontent.com/surrealdb/surrealdb/main/img/icon.png
+category: database
+tags:
+  - database
+  - nosql
+  - multi-model
+  - graph
+
+versions:
+  - "v2.3.3"
+  - "v2.2.1"
+  - "v2.1.4"
+defaultVersion: "v2.3.3"
+
+services:
+  - name: surrealdb
+    type: worker
+    image: "surrealdb/surrealdb:${VERSION}"
+    command: ["/surreal"]
+    args:
+      - "start"
+      - "--user"
+      - "root"
+      - "--pass"
+      - "$(SURREAL_PASS)"
+      - "--bind"
+      - "0.0.0.0:8000"
+      - "rocksdb:/data/db"
+    ports:
+      - port: 8000
+    env:
+      - key: SURREAL_PASS
+        generator: password
+        description: SurrealDB root user password
+    volumes:
+      - name: surrealdb-data
+        path: /data
+        size: 6144
+    health_check:
+      type: http
+      path: /health
+      port: 8000
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8000
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

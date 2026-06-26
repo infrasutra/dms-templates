@@ -1,0 +1,52 @@
+version: "1"
+
+name: etcd
+description: etcd is a distributed, reliable key-value store for the most critical data of a distributed system. It is the backbone of Kubernetes and many cloud-native projects.
+icon: https://etcd.io/img/etcd-horizontal-color.svg
+category: database
+tags:
+  - database
+  - key-value
+  - distributed
+  - coordination
+  - raft
+
+versions:
+  - "v3.5.21"
+  - "v3.5.20"
+  - "v3.5.19"
+defaultVersion: "v3.5.21"
+
+services:
+  - name: etcd
+    type: worker
+    image: "quay.io/coreos/etcd:${VERSION}"
+    command:
+      - /usr/local/bin/etcd
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://0.0.0.0:2379
+      - --data-dir=/etcd-data
+    ports:
+      - port: 2379
+    volumes:
+      - name: etcd-data
+        path: /etcd-data
+        size: 2048
+    health_check:
+      type: exec
+      command: ["etcdctl", "endpoint", "health"]
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 2379
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

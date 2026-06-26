@@ -1,0 +1,59 @@
+version: "1"
+
+# Template metadata
+name: typesense
+description: Typesense is a fast, typo-tolerant, open-source search engine optimised for instant search-as-you-type experiences. It provides a simple REST API with great developer experience and predictable, low-latency performance.
+icon: https://typesense.org/images/typesense_logo.svg
+category: search
+tags:
+  - search
+  - database
+  - full-text
+  - typesense
+
+# Supported versions
+versions:
+  - "28.0"
+  - "27.1"
+  - "26.0"
+defaultVersion: "28.0"
+
+# Service definitions
+services:
+  - name: typesense
+    type: worker
+    image: "typesense/typesense:${VERSION}"
+    args:
+      - "--data-dir"
+      - "/data"
+      - "--api-key=$(TYPESENSE_API_KEY)"
+      - "--enable-cors"
+    ports:
+      - port: 8108
+    env:
+      - key: TYPESENSE_API_KEY
+        generator: secret
+        description: Bootstrap API key used to authenticate all requests to the Typesense server
+    volumes:
+      - name: typesense-data
+        path: /data
+        size: 4096
+    health_check:
+      type: http
+      path: /health
+      port: 8108
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 150
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 8108
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

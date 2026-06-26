@@ -1,0 +1,56 @@
+version: "1"
+
+# Template metadata
+name: qdrant
+description: Qdrant is a high-performance, production-ready vector database and vector similarity search engine. It provides a production-ready service with a convenient API for storing, searching, and managing points with an additional payload.
+icon: https://raw.githubusercontent.com/qdrant/qdrant/master/docs/logo.png
+category: database
+tags:
+  - database
+  - vector
+  - search
+  - ai
+  - embeddings
+
+# Supported versions
+versions:
+  - "v1.14.1"
+  - "v1.13.6"
+  - "v1.12.6"
+defaultVersion: "v1.14.1"
+
+# Service definitions
+services:
+  - name: qdrant
+    type: worker
+    image: "qdrant/qdrant:${VERSION}"
+    ports:
+      - port: 6333
+      - port: 6334
+    env:
+      - key: QDRANT__SERVICE__API_KEY
+        generator: secret
+        description: API key for authenticating requests to the Qdrant REST and gRPC API
+    volumes:
+      - name: qdrant-storage
+        path: /qdrant/storage
+        size: 4096
+    health_check:
+      type: http
+      path: /
+      port: 6333
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 200
+    memory: 512
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 6333
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

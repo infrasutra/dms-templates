@@ -1,0 +1,51 @@
+version: "1"
+
+name: valkey
+description: Valkey is an open-source, high-performance key-value store forked from Redis. It is a drop-in replacement for Redis with full protocol compatibility and active community development.
+icon: https://valkey.io/assets/img/valkey-horizontal-color-logo.svg
+category: cache
+tags:
+  - cache
+  - database
+  - in-memory
+  - key-value
+  - redis-compatible
+
+versions:
+  - "9.0"
+  - "8.1"
+  - "8.0"
+defaultVersion: "9.0"
+
+services:
+  - name: valkey
+    type: worker
+    image: "valkey/valkey:${VERSION}-alpine"
+    ports:
+      - port: 6379
+    env:
+      - key: VALKEY_PASSWORD
+        generator: password
+        description: Valkey authentication password
+    volumes:
+      - name: valkey-data
+        path: /data
+        size: 2048
+    health_check:
+      type: exec
+      command: ["valkey-cli", "ping"]
+      initial_delay: 5
+      interval: 10
+      timeout: 3
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 6379
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system

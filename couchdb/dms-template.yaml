@@ -1,0 +1,55 @@
+version: "1"
+
+name: couchdb
+description: Apache CouchDB is an open-source document-oriented NoSQL database that uses JSON to store data, JavaScript as its query language using MapReduce, and HTTP for an API. It is schema-free and highly available, with built-in replication and conflict resolution.
+icon: https://raw.githubusercontent.com/docker-library/docs/master/couchdb/logo.png
+category: database
+tags:
+  - database
+  - nosql
+  - document
+  - json
+
+versions:
+  - "3.5.0"
+  - "3.4.3"
+  - "3.3.3"
+defaultVersion: "3.5.0"
+
+services:
+  - name: couchdb
+    type: worker
+    image: "couchdb:${VERSION}"
+    ports:
+      - port: 5984
+    env:
+      - key: COUCHDB_USER
+        default: admin
+        configurable: true
+        description: CouchDB administrator username
+      - key: COUCHDB_PASSWORD
+        generator: password
+        description: CouchDB administrator password
+    volumes:
+      - name: couchdb-data
+        path: /opt/couchdb/data
+        size: 6144
+    health_check:
+      type: http
+      path: /_up
+      port: 5984
+      initial_delay: 10
+      interval: 10
+      timeout: 5
+      retries: 3
+    cpu: 100
+    memory: 256
+    tcp_exposure:
+      enabled: false
+      hostname: "${NAME}-${STAGE}.${DOMAIN}"
+      port: 5984
+      tls:
+        mode: terminate
+      gateway:
+        name: dms-gateway
+        namespace: dms-system
