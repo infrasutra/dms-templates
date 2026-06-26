@@ -36,7 +36,7 @@ services:
     volumes:
       - name: loki-data
         path: /loki
-        size: 20480
+        size: 4096
     health_check:
       type: http
       path: /ready

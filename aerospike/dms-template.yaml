@@ -14,16 +14,16 @@ tags:
 
 # Supported versions
 versions:
-  - "ce-7.1"
-  - "ce-7.0"
-  - "ce-6.4"
-defaultVersion: "ce-7.1"
+  - "8.0"
+  - "7.2"
+  - "7.1"
+defaultVersion: "8.0"
 
 # Service definitions
 services:
   - name: aerospike
     type: worker
-    image: "aerospike:${VERSION}"
+    image: "aerospike/aerospike-server:${VERSION}"
     ports:
       - port: 3000
     env:

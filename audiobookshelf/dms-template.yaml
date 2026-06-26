@@ -48,10 +48,10 @@ services:
         size: 5120
       - name: audiobookshelf-audiobooks
         path: /audiobooks
-        size: 102400
+        size: 4096
       - name: audiobookshelf-podcasts
         path: /podcasts
-        size: 51200
+        size: 4096
     health_check:
       type: http
       path: /healthcheck

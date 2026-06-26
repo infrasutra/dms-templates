@@ -79,7 +79,7 @@ services:
         size: 5120
       - name: paperless-media
         path: /usr/src/paperless/media
-        size: 51200
+        size: 4096
       - name: paperless-consume
         path: /usr/src/paperless/consume
         size: 5120

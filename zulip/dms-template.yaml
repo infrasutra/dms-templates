@@ -80,7 +80,7 @@ services:
     volumes:
       - name: zulip-data
         path: /data
-        size: 20480
+        size: 4096
     health_check:
       type: http
       path: /api/v1/server_settings

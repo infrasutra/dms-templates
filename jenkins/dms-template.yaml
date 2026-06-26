@@ -43,7 +43,7 @@ services:
     volumes:
       - name: jenkins-home
         path: /var/jenkins_home
-        size: 20480
+        size: 4096
     health_check:
       type: http
       path: /login

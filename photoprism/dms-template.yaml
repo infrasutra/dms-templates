@@ -78,7 +78,7 @@ services:
         size: 10240
       - name: photoprism-originals
         path: /photoprism/originals
-        size: 102400
+        size: 4096
     health_check:
       type: http
       path: /api/v1/status
