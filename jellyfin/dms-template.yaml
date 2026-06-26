@@ -37,10 +37,10 @@ services:
         size: 5120
       - name: jellyfin-media
         path: /media
-        size: 102400
+        size: 4096
       - name: jellyfin-cache
         path: /cache
-        size: 10240
+        size: 6144
     health_check:
       type: http
       path: /health

@@ -65,7 +65,7 @@ services:
         size: 1024
       - name: navidrome-music
         path: /music
-        size: 102400
+        size: 4096
     health_check:
       type: http
       path: /ping

@@ -69,7 +69,7 @@ services:
     volumes:
       - name: kafka-data
         path: /var/lib/kafka/data
-        size: 51200
+        size: 4096
     health_check:
       type: exec
       command: ["kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]

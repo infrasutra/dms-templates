@@ -62,7 +62,7 @@ services:
     volumes:
       - name: immich-upload
         path: /usr/src/app/upload
-        size: 102400
+        size: 4096
     health_check:
       type: http
       path: /api/server-info/ping
@@ -114,7 +114,7 @@ services:
     volumes:
       - name: immich-upload
         path: /usr/src/app/upload
-        size: 102400
+        size: 4096
     cpu: 500
     memory: 1024
 
@@ -130,7 +130,7 @@ services:
     volumes:
       - name: immich-ml-cache
         path: /cache
-        size: 10240
+        size: 6144
     health_check:
       type: http
       path: /ping

@@ -59,7 +59,7 @@ services:
     volumes:
       - name: nextcloud-data
         path: /var/www/html
-        size: 51200
+        size: 4096
     health_check:
       type: http
       path: /status.php

@@ -65,7 +65,7 @@ services:
     volumes:
       - name: sentry-data
         path: /var/lib/sentry/files
-        size: 10240
+        size: 6144
     health_check:
       type: http
       path: /_health/
@@ -116,7 +116,7 @@ services:
     volumes:
       - name: sentry-data
         path: /var/lib/sentry/files
-        size: 10240
+        size: 6144
     cpu: 300
     memory: 1024
 

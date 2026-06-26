@@ -56,7 +56,7 @@ services:
         size: 5120
       - name: gitlab-data
         path: /var/opt/gitlab
-        size: 51200
+        size: 4096
     health_check:
       type: http
       path: /-/health

@@ -41,7 +41,7 @@ services:
     volumes:
       - name: minio-data
         path: /data
-        size: 51200
+        size: 4096
     health_check:
       type: http
       path: /minio/health/live

@@ -35,7 +35,7 @@ services:
     volumes:
       - name: ollama-data
         path: /root/.ollama
-        size: 51200
+        size: 4096
     health_check:
       type: http
       path: /
