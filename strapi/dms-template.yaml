@@ -14,15 +14,15 @@ tags:
 
 # Supported versions
 versions:
-  - "4"
-  - "3.6"
-defaultVersion: "4"
+  - "latest"
+  - "5.30.1"
+defaultVersion: "latest"
 
 # Service definitions
 services:
   - name: strapi
     type: web
-    image: "strapi/strapi:${VERSION}"
+    image: "naskio/strapi:${VERSION}"
     ports:
       - port: 1337
     env:
