@@ -14,10 +14,10 @@ tags:
 
 # Supported versions
 versions:
-  - "8.0"
+  - "8.1"
   - "7.2"
-  - "7.1"
-defaultVersion: "8.0"
+  - "6.4"
+defaultVersion: "8.1"
 
 # Service definitions
 services:

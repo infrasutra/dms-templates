@@ -14,10 +14,10 @@ tags:
 
 # Supported versions
 versions:
+  - "latest-pg17"
   - "latest-pg16"
-  - "2.14.2-pg16"
-  - "2.13.1-pg16"
-defaultVersion: "latest-pg16"
+  - "latest-pg15"
+defaultVersion: "latest-pg17"
 
 # Service definitions
 services:

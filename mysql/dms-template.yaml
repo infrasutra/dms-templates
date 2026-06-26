@@ -14,8 +14,8 @@ tags:
 # Supported versions
 versions:
   - "9"
-  - "8.4"
-  - "8.0"
+  - "8"
+  - "5.7"
 defaultVersion: "9"
 
 # Service definitions

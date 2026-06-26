@@ -15,7 +15,7 @@ tags:
 # Supported versions
 versions:
   - "community-7.6.2"
-  - "community-7.2.4"
+  - "community-6.6.0"
 defaultVersion: "community-7.6.2"
 
 # Service definitions

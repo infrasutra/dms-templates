@@ -15,8 +15,8 @@ tags:
 # Supported versions
 versions:
   - "12"
-  - "11.8"
-  - "11.4"
+  - "11"
+  - "10"
 defaultVersion: "12"
 
 # Service definitions
