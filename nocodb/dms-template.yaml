@@ -14,10 +14,10 @@ tags:
 
 # Supported versions
 versions:
-  - "0.204"
-  - "0.203"
+  - "2026.06.1"
+  - "2026.05.3"
   - "latest"
-defaultVersion: "0.204"
+defaultVersion: "2026.06.1"
 
 # Service definitions
 services:

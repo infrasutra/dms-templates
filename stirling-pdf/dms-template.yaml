@@ -14,16 +14,15 @@ tags:
 
 # Supported versions
 versions:
-  - "0.24.0"
-  - "0.23.0"
   - "latest"
-defaultVersion: "0.24.0"
+  - "2.13.2"
+defaultVersion: "latest"
 
 # Service definitions
 services:
   - name: stirling-pdf
     type: web
-    image: "frooodle/s-pdf:${VERSION}"
+    image: "stirlingtools/stirling-pdf:${VERSION}"
     ports:
       - port: 8080
     env:

@@ -14,10 +14,10 @@ tags:
 
 # Supported versions
 versions:
-  - "v0.20"
-  - "v0.19"
+  - "stable"
+  - "v1.3.1"
   - "latest"
-defaultVersion: "v0.20"
+defaultVersion: "stable"
 
 # Service definitions
 services:
@@ -81,7 +81,7 @@ services:
     volumes:
       - name: plane-uploads
         path: /code/plane/uploads
-        size: 10240
+        size: 6144
     health_check:
       type: http
       path: /api/v1/
@@ -111,6 +111,6 @@ services:
     volumes:
       - name: plane-uploads
         path: /code/plane/uploads
-        size: 10240
+        size: 6144
     cpu: 200
     memory: 512
